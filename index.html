@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    
+    <!-- 5️⃣ Content Security Policy (CSP) -->
+    <!-- ملاحظة أمنية: استخدام 'unsafe-inline' و 'unsafe-eval' ضروري حصراً لعمل مكتبة Tailwind CDN في بيئة المتصفح. 
+         في بيئة الإنتاج الحقيقية، يجب عمل Compile لـ Tailwind وإزالة هذه الاستثناءات. -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; 
+        style-src 'self' 'unsafe-inline' https:; 
+        font-src 'self' data: https:; 
+        connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://unpkg.com;
+        img-src 'self' data: https:;
+        object-src 'none';
+    ">
+
+    <title>الخزنة السحابية الذكية</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        // 7️⃣ تفعيل HTTPS فقط (فرض التحويل)
+        if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            window.location.href = window.location.href.replace('http:', 'https:');
+        }
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        dark: '#0f172a',
+                        card: '#1e293b',
+                        primary: '#0ea5e9',
+                        primaryDark: '#0284c7',
+                        accent: '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        /* Glassmorphism Classes */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-field {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+            outline: none;
+        }
+        
+        select.input-field {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 1rem center;
+            background-size: 1.2em;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* Element Selector Radio */
+        .element-radio:checked + label {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+            transform: scale(1.1);
+        }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .slide-up { animation: slideUp 0.4s ease-out forwards; }
+        .slide-down { animation: slideDown 0.4s ease-out forwards; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translate(-50%, -20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Toast notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideUp 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary selection:text-white pb-20">
+
+    <!-- Install App Banner (PWA) -->
+    <div id="install-banner" class="hidden fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-gray-800 border border-primary p-4 rounded-xl shadow-[0_10px_40px_rgba(14,165,233,0.3)] z-[1001] justify-between items-center slide-down">
+        <div class="flex items-center gap-3">
+            <div class="bg-primary bg-opacity-20 p-2.5 rounded-lg text-primary flex-shrink-0">
+                <i class="ph-bold ph-download-simple text-2xl"></i>
+            </div>
+            <div class="text-right">
+                <p id="install-text" class="text-white font-bold text-sm">تثبيت التطبيق</p>
+                <p id="install-desc" class="text-gray-400 text-[11px] mt-0.5 leading-tight">أضف الخزنة لجهازك للوصول السريع بدون متصفح</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 mr-2">
+            <button id="install-btn" class="bg-primary hover:bg-primaryDark text-white text-sm px-4 py-2 rounded-lg font-bold transition-colors shadow-lg whitespace-nowrap">تثبيت</button>
+            <button id="close-install-btn" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700 transition-colors flex-shrink-0"><i class="ph-bold ph-x text-lg"></i></button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <div class="container mx-auto px-4 max-w-4xl pt-12 md:pt-20">
+        
+        <!-- Header -->
+        <header class="text-center mb-10 fade-in">
+            <div class="inline-flex items-center justify-center p-4 bg-card rounded-full mb-4 shadow-lg border border-gray-700">
+                <i class="ph-fill ph-shield-check text-5xl text-accent"></i>
+            </div>
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent mb-2">الخزنة السحابية الذكية</h1>
+            <p class="text-gray-400 text-sm md:text-base">تشفير عسكري. بنية صفرية المعرفة (Zero-Knowledge).</p>
+            
+            <!-- Programming Credits -->
+            <div class="mt-4 inline-flex flex-wrap justify-center items-center gap-2 px-5 py-2 rounded-full bg-gray-800 bg-opacity-60 border border-gray-700 text-xs md:text-sm text-gray-300 shadow-lg">
+                <i class="ph-bold ph-code text-primary text-lg"></i>
+                <span>تمت البرمجة بواسطة: <strong class="text-white">خالد محي الدين</strong></span>
+                <span class="text-gray-500 hidden sm:inline">|</span>
+                <i class="ph-fill ph-phone-call text-accent text-lg sm:ml-2"></i>
+                <span class="font-mono text-accent font-bold" dir="ltr">01018282460</span>
+            </div>
+        </header>
+        
+        <!-- Loading -->
+        <div id="loading-section" class="flex flex-col items-center justify-center py-20 fade-in">
+            <i class="ph ph-spinner-gap text-4xl text-primary animate-spin mb-4"></i>
+            <p class="text-gray-400">جاري الاتصال بالخوادم الآمنة...</p>
+        </div>
+
+        <!-- Auth Section -->
+        <div id="auth-section" class="hidden glass-card rounded-2xl p-8 max-w-md mx-auto slide-up">
+            
+            <!-- Auth Tabs -->
+            <div class="flex bg-gray-800 bg-opacity-60 p-1.5 rounded-xl mb-6 border border-gray-700 shadow-inner">
+                <button id="tab-login" class="flex-1 py-2 text-sm font-bold rounded-lg bg-primary text-white shadow-md transition-all">تسجيل الدخول</button>
+                <button id="tab-register" class="flex-1 py-2 text-sm font-bold rounded-lg text-gray-400 hover:text-white transition-all">حساب جديد</button>
+            </div>
+
+            <!-- Dynamic Headers -->
+            <div class="text-center mb-6">
+                <h2 id="auth-title" class="text-2xl font-bold text-white mb-2">مرحباً بك مجدداً!</h2>
+                <p id="auth-subtitle" class="text-gray-400 text-sm">أدخل بياناتك للوصول إلى خزنتك المشفرة</p>
+            </div>
+
+            <!-- Form -->
+            <div class="space-y-4 relative">
+                <div class="relative">
+                    <i class="ph ph-envelope-simple absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                    <input type="email" id="auth-email" class="input-field w-full py-3 pr-10 pl-4 rounded-xl" placeholder="البريد الإلكتروني">
+                </div>
+                <div class="relative">
+                    <i class="ph ph-lock absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                    <input type="password" id="auth-password" class="input-field w-full py-3 pr-10 pl-4 rounded-xl" placeholder="كلمة المرور (6 أحرف على الأقل)">
+                </div>
+                
+                <div class="pt-4 flex flex-col gap-3">
+                    <button id="auth-action-btn" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(14,165,233,0.3)] hover:shadow-[0_0_25px_rgba(14,165,233,0.5)] flex justify-center items-center gap-2">
+                        <i class="ph-bold ph-sign-in text-lg"></i> دخول للخزنة
+                    </button>
+                </div>
+                
+                <p id="auth-error" class="text-red-400 text-sm text-center mt-2 h-5"></p>
+                <div class="text-center mt-2">
+                    <button id="forgot-password-button" class="text-sm text-gray-400 hover:text-white transition-colors border-b border-transparent hover:border-gray-400 pb-0.5">هل نسيت كلمة المرور؟</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Password Section -->
+        <div id="master-password-section" class="hidden glass-card rounded-2xl p-8 max-w-md mx-auto slide-up border-t-4 border-t-accent">
+            <div class="text-center mb-6">
+                <i class="ph-fill ph-lock-key text-4xl text-accent mb-2"></i>
+                <h2 class="text-2xl font-bold text-white">مفتاح فك التشفير</h2>
+                <p id="master-password-prompt" class="text-sm text-gray-400 mt-2">أدخل كلمة المرور الرئيسية لفك تشفير بياناتك.</p>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Visual Seal Selection -->
+                <div>
+                    <p class="text-sm text-gray-300 mb-3 font-semibold">1. اختر عنصر الحماية المرئي الخاص بك:</p>
+                    <div class="grid grid-cols-5 gap-2" id="security-elements">
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_fire" value="FIRE" class="hidden element-radio" checked><label for="elem_fire" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="النار"><span class="text-2xl">🔥</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_water" value="WATER" class="hidden element-radio"><label for="elem_water" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الماء"><span class="text-2xl">🌊</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_earth" value="EARTH" class="hidden element-radio"><label for="elem_earth" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الأرض"><span class="text-2xl">🌿</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_air" value="AIR" class="hidden element-radio"><label for="elem_air" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الهواء"><span class="text-2xl">💨</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_lightning" value="LIGHTNING" class="hidden element-radio"><label for="elem_lightning" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="البرق"><span class="text-2xl">⚡</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_ice" value="ICE" class="hidden element-radio"><label for="elem_ice" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الجليد"><span class="text-2xl">❄️</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_moon" value="MOON" class="hidden element-radio"><label for="elem_moon" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="القمر"><span class="text-2xl">🌙</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_sun" value="SUN" class="hidden element-radio"><label for="elem_sun" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الشمس"><span class="text-2xl">☀️</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_star" value="STAR" class="hidden element-radio"><label for="elem_star" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="النجمة"><span class="text-2xl">⭐</span></label></div>
+                        <div class="relative"><input type="radio" name="sec_element" id="elem_diamond" value="DIAMOND" class="hidden element-radio"><label for="elem_diamond" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الجوهرة"><span class="text-2xl">💎</span></label></div>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-300 mb-2 font-semibold">2. أدخل كلمة المرور الرئيسية:</p>
+                    <div class="relative">
+                        <i class="ph ph-key absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                        <input type="password" id="master-password-input" class="input-field w-full py-3 pr-10 pl-4 rounded-xl text-center tracking-widest" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <button id="master-password-submit" class="w-full bg-accent hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                    فتح الخزنة
+                </button>
+                <p id="master-password-error" class="text-red-400 text-sm text-center h-5"></p>
+            </div>
+            
+            <div class="mt-4 p-3 bg-blue-900 bg-opacity-30 border border-blue-800 rounded-lg text-xs text-blue-200">
+                <i class="ph-fill ph-info mr-1"></i> يتم دمج <b>العنصر المرئي</b> مع <b>كلمة المرور</b> لتوليد مفتاح تشفير معقد لا يمكن كسره.
+            </div>
+        </div>
+
+        <!-- Main App Section -->
+        <div id="app-section" class="hidden fade-in w-full">
+            
+            <!-- App Header/Nav -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 glass-card p-4 rounded-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold text-xl">
+                        <i class="ph ph-shield-check text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400">خزنة محمية 100%</p>
+                        <p id="user-email-display" class="font-bold text-sm text-white"></p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button onclick="window.openAddModal()" class="flex-1 md:flex-none bg-primary hover:bg-primaryDark text-white px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
+                        <i class="ph-bold ph-plus"></i> إضافة حساب
+                    </button>
+                    <button id="logout-button" class="flex-1 md:flex-none bg-red-500 hover:bg-red-600 bg-opacity-20 hover:bg-opacity-100 text-red-400 hover:text-white border border-red-500 px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all">
+                        <i class="ph-bold ph-sign-out"></i> خروج
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Bar & Categories -->
+            <div class="max-w-3xl mx-auto mb-8">
+                <!-- Search -->
+                <div class="relative mb-4">
+                    <i class="ph ph-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                    <input type="text" id="search-input" class="input-field w-full py-3 pr-12 pl-4 rounded-xl text-center" placeholder="ابحث في كلمات المرور الخاصة بك...">
+                </div>
+                <!-- Category Tabs -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar w-full" id="category-tabs-container">
+                    <div id="category-tabs" class="flex gap-2">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entries Grid -->
+            <div id="entries-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Entries generated by JS -->
+            </div>
+            
+            <!-- Empty State -->
+            <div id="no-entries-message" class="hidden text-center py-20">
+                <i class="ph-twotone ph-folder-open text-7xl text-gray-600 mb-4 inline-block"></i>
+                <h3 class="text-xl font-bold text-gray-300">لا يوجد حسابات هنا</h3>
+                <p class="text-gray-500 mt-2">اضغط على زر "إضافة حساب" لحفظ بياناتك بأمان في هذا التصنيف.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Categories Modal -->
+    <div id="manage-categories-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-sm border border-gray-600 shadow-2xl transform transition-all slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="ph-bold ph-gear text-primary"></i> إدارة التصنيفات</h3>
+                <button onclick="document.getElementById('manage-categories-modal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            
+            <!-- Add New Category -->
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="new-category-input" placeholder="اسم التصنيف الجديد" class="input-field flex-grow p-3 rounded-xl text-sm">
+                <button id="add-category-btn" class="bg-primary hover:bg-primaryDark text-white font-bold py-2 px-4 rounded-xl transition-colors">
+                    إضافة
+                </button>
+            </div>
+
+            <!-- List of Categories -->
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar" id="categories-list">
+                <!-- Populated by JS -->
+            </div>
+            
+            <div class="mt-6 p-3 bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg text-xs text-gray-400 text-center">
+                عند حذف أي تصنيف، سيتم نقل حساباته تلقائياً لتصنيف "عام" حفاظاً عليها.
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Entry Modal -->
+    <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-md border border-gray-600 shadow-2xl transform transition-all slide-up my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-white flex items-center gap-2"><i class="ph-bold ph-plus-circle text-primary"></i> إضافة بيانات جديدة</h3>
+                <button onclick="document.getElementById('add-modal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-sm text-gray-400 mb-1">اسم الموقع</label>
+                        <input type="text" id="website-input" placeholder="مثال: Google" class="input-field w-full p-3 rounded-xl">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-sm text-gray-400 mb-1">التصنيف</label>
+                        <select id="category-input" class="input-field w-full p-3 rounded-xl cursor-pointer">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">البريد الإلكتروني / رقم الهاتف</label>
+                    <input type="text" id="username-input" placeholder="user@example.com / 01xxxxxxxx" class="input-field w-full p-3 rounded-xl text-left" dir="ltr">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">كلمة المرور</label>
+                    <div class="relative">
+                        <input type="password" id="password-input" placeholder="••••••••" class="input-field w-full p-3 pl-24 rounded-xl text-left" dir="ltr">
+                        <button id="generate-password" class="absolute left-2 top-1/2 -translate-y-1/2 text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                            <i class="ph-bold ph-magic-wand"></i> توليد
+                        </button>
+                        <button id="toggle-add-pwd" class="absolute left-20 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1">
+                            <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Color Picker Section -->
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2 mt-2">لون الكارت (للتمييز)</label>
+                    <div id="add-color-picker" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <button id="add-entry" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl mt-4 transition-colors">
+                    حفظ وتشفير
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Entry Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-md border border-gray-600 shadow-2xl my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-white flex items-center gap-2"><i class="ph-bold ph-pencil-simple text-blue-400"></i> تعديل البيانات</h3>
+                <button id="edit-cancel-btn" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-xs text-gray-400 mb-1">اسم الموقع</label>
+                        <input type="text" id="edit-website-input" class="input-field w-full p-3 rounded-xl">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-xs text-gray-400 mb-1">تغيير التصنيف</label>
+                        <select id="edit-category-input" class="input-field w-full p-3 rounded-xl cursor-pointer">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">البريد الإلكتروني / رقم الهاتف</label>
+                    <input type="text" id="edit-username-input" class="input-field w-full p-3 rounded-xl text-left" dir="ltr">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">كلمة المرور</label>
+                    <input type="text" id="edit-password-input" class="input-field w-full p-3 rounded-xl text-left" dir="ltr">
+                </div>
+                
+                <!-- Color Picker Section -->
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2 mt-2">تغيير لون الكارت</label>
+                    <div id="edit-color-picker" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6">
+                <button id="edit-save-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors">
+                    حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Password Modal -->
+    <div id="view-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-sm border border-accent shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-black bg-opacity-30 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl font-bold shadow-inner border border-white border-opacity-10 overflow-hidden relative" id="modal-icon">
+                    <!-- Icon initial will be inserted here by JS -->
+                </div>
+                <h3 class="text-xl font-bold text-white break-words px-2" id="modal-website" dir="auto"></h3>
+                <span id="modal-category" class="inline-block px-3 py-1 bg-black bg-opacity-20 border border-white border-opacity-10 rounded-full text-xs text-gray-300 mt-2"></span>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-black bg-opacity-20 p-3 rounded-xl border border-white border-opacity-5 relative group">
+                    <p class="text-xs text-gray-400 mb-1">البريد / الحساب</p>
+                    <p class="font-mono text-white text-left break-all select-all" dir="ltr" id="modal-username"></p>
+                    <button class="absolute top-1/2 -translate-y-1/2 left-3 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity" onclick="copyText('modal-username', 'تم نسخ البريد/الحساب')"><i class="ph-bold ph-copy text-xl"></i></button>
+                </div>
+                
+                <div class="bg-black bg-opacity-20 p-3 rounded-xl border border-white border-opacity-5 relative group">
+                    <p class="text-xs text-gray-400 mb-1">كلمة المرور</p>
+                    <p class="font-mono text-accent font-bold text-left break-all select-all text-lg" dir="ltr" id="modal-password-text"></p>
+                    <button class="absolute top-1/2 -translate-y-1/2 left-3 text-gray-400 hover:text-white" onclick="copyText('modal-password-text', 'تم نسخ كلمة المرور')"><i class="ph-bold ph-copy text-xl"></i></button>
+                </div>
+            </div>
+            
+            <button id="modal-close" class="w-full mt-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl transition-colors">
+                إغلاق
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-sm border border-red-500 text-center">
+            <i class="ph-duotone ph-warning text-5xl text-red-500 mb-4 inline-block"></i>
+            <h3 class="text-xl font-bold text-white mb-2">تأكيد الإجراء</h3>
+            <p id="confirm-modal-text" class="text-gray-400 mb-6"></p>
+            <div class="flex gap-3">
+                <button id="confirm-modal-yes" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl transition-colors">نعم، متأكد</button>
+                <button id="confirm-modal-no" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2.5 rounded-xl transition-colors">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
+
+        // --- DOM Elements ---
+        const $ = id => document.getElementById(id);
+        const loadingSection = $('loading-section');
+        const authSection = $('auth-section');
+        const masterPasswordSection = $('master-password-section');
+        const appSection = $('app-section');
+        
+        // --- App State ---
+        let masterKey = null;
+        let userSalt = null; // 🔐 Dynamic Salt Storage
+        let entries = [];
+        let displayedEntries = [];
+        let db, auth;
+        let vaultDocRef = null;
+        let unsubscribe = null;
+        let confirmCallback = null;
+        let editingIndex = null; 
+        
+        let authMode = 'login'; 
+
+        // 6️⃣ متغيرات Rate Limiting الوهمية (الاعتماد الأساسي سيكون على App Check)
+        let failedLoginAttempts = 0;
+        let lockoutTimer = null;
+
+        // ⏱️ متغيرات الإغلاق التلقائي (Auto-Lock)
+        let inactivityTimeout = null;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 دقائق
+
+        // --- Categories & Colors Config ---
+        let customCategories = ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+        let currentCategory = 'الكل';
+        const CARD_COLORS = [
+            { id: 'default', bg: 'rgba(30, 41, 59, 0.7)' },
+            { id: 'red', bg: 'rgba(153, 27, 27, 0.5)' },
+            { id: 'orange', bg: 'rgba(194, 65, 12, 0.5)' },
+            { id: 'amber', bg: 'rgba(180, 83, 9, 0.5)' },
+            { id: 'green', bg: 'rgba(21, 128, 61, 0.5)' },
+            { id: 'emerald', bg: 'rgba(4, 120, 87, 0.5)' },
+            { id: 'cyan', bg: 'rgba(14, 116, 144, 0.5)' },
+            { id: 'blue', bg: 'rgba(29, 78, 216, 0.5)' },
+            { id: 'indigo', bg: 'rgba(67, 56, 202, 0.5)' },
+            { id: 'purple', bg: 'rgba(126, 34, 206, 0.5)' },
+            { id: 'pink', bg: 'rgba(190, 24, 93, 0.5)' },
+            { id: 'rose', bg: 'rgba(190, 18, 60, 0.5)' }
+        ];
+        let currentAddColor = 'default';
+        let currentEditColor = 'default';
+
+        // --- Crypto Configuration ---
+        const ITERATIONS = 600000; // المعيار الجديد الأقوى
+        const ALGORITHM = 'AES-GCM';
+        const KEY_LENGTH = 256;
+
+        // --- Auto-Lock Logic ---
+        function resetInactivityTimer() {
+            if (!masterKey) return; 
+            clearTimeout(inactivityTimeout);
+            inactivityTimeout = setTimeout(lockVault, INACTIVITY_LIMIT);
+        }
+
+        function lockVault() {
+            masterKey = null;
+            entries = [];
+            displayedEntries = [];
+            $('entries-grid').innerHTML = ''; 
+            $('app-section').classList.add('hidden');
+            $('master-password-section').classList.remove('hidden');
+            $('master-password-input').value = '';
+            showToast('تم قفل الخزنة تلقائياً لحمايتك بسبب عدم النشاط', 'warning');
+        }
+
+        ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
+            window.addEventListener(evt, resetInactivityTimer);
+        });
+
+        // --- PWA Setup ---
+        let deferredPrompt;
+        const installBanner = $('install-banner');
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        const isIos = /iphone|ipad|ipod/.test(userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        
+        try {
+            const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#0f172a"/><path fill="#0ea5e9" d="M256 80C149.9 80 64 165.9 64 272s85.9 192 192 192 192-85.9 192-192S362.1 80 256 80zm0 336c-79.5 0-144-64.5-144-144s64.5-144 144-144 144 64.5 144 144-64.5 144-144 144z"/><path fill="#10b981" d="M256 160c-61.9 0-112 50.1-112 112s50.1 112 112 112 112-50.1 112-112-50.1-112-112-112zm0 176c-35.3 0-64-28.7-64-64s28.7-64 64-64 64 28.7 64 64-28.7 64-64 64z"/></svg>`;
+            const iconBase64 = 'data:image/svg+xml;base64,' + btoa(iconSvg);
+            const manifest = { name: "الخزنة السحابية الذكية", short_name: "الخزنة", start_url: window.location.href.split('?')[0], display: "standalone", background_color: "#0f172a", theme_color: "#0f172a", icons: [{ src: iconBase64, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" }, { src: iconBase64, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }] };
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = URL.createObjectURL(manifestBlob);
+            document.head.appendChild(manifestLink);
+            const swCode = `self.addEventListener('fetch', ()=>{});`;
+            const swBlob = new Blob([swCode], { type: 'text/javascript' });
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(e => console.warn('SW Skipped'));
+        } catch(e) {}
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            if (!isIos && !isStandalone) setTimeout(() => { installBanner.classList.remove('hidden'); installBanner.classList.add('flex'); }, 1500);
+        });
+
+        if (isIos && !isStandalone) {
+            setTimeout(() => {
+                $('install-text').textContent = 'تثبيت التطبيق (آيفون)';
+                $('install-desc').innerHTML = 'اضغط على زر المشاركة <i class="ph-bold ph-export"></i> بالأسفل ثم اختر <br>"إضافة للشاشة الرئيسية" <i class="ph-bold ph-plus-square"></i>';
+                $('install-btn').classList.add('hidden'); installBanner.classList.remove('hidden'); installBanner.classList.add('flex');
+            }, 1500);
+        }
+
+        $('install-btn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') showToast('جاري تثبيت التطبيق...', 'success');
+                deferredPrompt = null;
+            }
+            installBanner.classList.add('hidden'); installBanner.classList.remove('flex');
+        });
+
+        $('close-install-btn').addEventListener('click', () => { installBanner.classList.add('hidden'); installBanner.classList.remove('flex'); });
+        window.addEventListener('appinstalled', () => { installBanner.classList.add('hidden'); installBanner.classList.remove('flex'); showToast('مبروك! تم تثبيت التطبيق بنجاح', 'success'); });
+
+        // --- Strict DOM Manipulation UI Helpers ---
+        window.showToast = function(message, type = 'success') {
+            const container = $('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            
+            const iconWrapper = document.createElement('div');
+            iconWrapper.innerHTML = type === 'success' ? '<i class="ph-fill ph-check-circle text-accent text-xl"></i>' : '<i class="ph-fill ph-warning-circle text-red-500 text-xl"></i>';
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = 'text-white text-sm';
+            textSpan.textContent = message; 
+
+            toast.appendChild(iconWrapper);
+            toast.appendChild(textSpan);
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        function showConfirm(message, callback) {
+            confirmCallback = callback;
+            $('confirm-modal-text').textContent = message; 
+            $('confirm-modal').classList.remove('hidden');
+        }
+        
+        $('confirm-modal-no').addEventListener('click', () => { $('confirm-modal').classList.add('hidden'); if (confirmCallback) confirmCallback(false); });
+        $('confirm-modal-yes').addEventListener('click', () => { $('confirm-modal').classList.add('hidden'); if (confirmCallback) confirmCallback(true); });
+
+        window.copyText = function(elementId, successMsg) {
+            const text = $(elementId).innerText || $(elementId).value || elementId; 
+            performCopy(text, successMsg);
+        };
+        
+        function performCopy(text, successMsg) {
+            navigator.clipboard.writeText(text).then(() => { showToast(successMsg, 'success'); }).catch(err => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try { document.execCommand('copy'); showToast(successMsg, 'success'); } 
+                catch (e) { showToast('فشل النسخ', 'error'); }
+                document.body.removeChild(textarea);
+            });
+        }
+
+        function renderColorPicker(containerId, defaultColorId, callback) {
+            const container = $(containerId);
+            container.innerHTML = ''; 
+            
+            CARD_COLORS.forEach(color => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `w-10 h-10 rounded-full transition-transform duration-200 shadow-inner flex items-center justify-center`;
+                btn.style.background = color.bg.replace('0.5', '1').replace('0.7', '1'); 
+                
+                if (color.id === defaultColorId) {
+                    btn.classList.add('border-2', 'border-white', 'scale-110');
+                    btn.innerHTML = `<i class="ph-bold ph-check text-white text-lg"></i>`;
+                } else {
+                    btn.classList.add('border-2', 'border-transparent', 'hover:scale-110');
+                }
+                
+                btn.onclick = () => { callback(color.id); renderColorPicker(containerId, color.id, callback); };
+                container.appendChild(btn);
+            });
+        }
+
+        // --- Core Crypto Functions ---
+        // 🛡️ التعديل: تمرير عدد التكرارات كمعامل لكي نتمكن من فك التشفير القديم (100,000) والجديد (600,000)
+        async function deriveKey(passwordStr, saltStr, targetIterations = ITERATIONS) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await window.crypto.subtle.importKey('raw', encoder.encode(passwordStr), { name: 'PBKDF2' }, false, ['deriveKey']);
+            return window.crypto.subtle.deriveKey({ name: 'PBKDF2', salt: encoder.encode(saltStr), iterations: targetIterations, hash: 'SHA-256' }, keyMaterial, { name: ALGORITHM, length: KEY_LENGTH }, true, ['encrypt', 'decrypt']);
+        }
+        
+        async function encryptData(data, key) {
+            const encoder = new TextEncoder();
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encryptedContent = await window.crypto.subtle.encrypt({ name: ALGORITHM, iv: iv }, key, encoder.encode(data));
+            const encryptedBytes = new Uint8Array(encryptedContent);
+            const result = new Uint8Array(iv.length + encryptedBytes.length);
+            result.set(iv); result.set(encryptedBytes, iv.length);
+            return btoa(String.fromCharCode.apply(null, result));
+        }
+        
+        async function decryptData(encryptedData, key) {
+            try {
+                const dataBytes = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
+                const iv = dataBytes.slice(0, 12);
+                const encryptedContent = dataBytes.slice(12);
+                const decryptedContent = await window.crypto.subtle.decrypt({ name: ALGORITHM, iv: iv }, key, encryptedContent);
+                return new TextDecoder().decode(decryptedContent);
+            } catch (e) { return null; }
+        }
+
+        // --- Firebase Integration ---
+        async function initializeFirebase() {
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyD4ssSrvUa5Z-GXteCVbeackGoHUOQXXeM",
+                    authDomain: "basw-3f1a7.firebaseapp.com",
+                    projectId: "basw-3f1a7",
+                    storageBucket: "basw-3f1a7.appspot.com",
+                    messagingSenderId: "689441903723",
+                    appId: "1:689441903723:web:a8de60760ab2b327c8cd2e"
+                };
+
+                const app = initializeApp(firebaseConfig);
+
+                const recaptchaKey = 'YOUR_RECAPTCHA_SITE_KEY_HERE';
+                if (recaptchaKey !== 'YOUR_RECAPTCHA_SITE_KEY_HERE') {
+                    try {
+                        initializeAppCheck(app, {
+                            provider: new ReCaptchaV3Provider(recaptchaKey), 
+                            isTokenAutoRefreshEnabled: true
+                        });
+                    } catch(e) { console.warn('App check init missing key, proceeding in dev mode'); }
+                }
+
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                onAuthStateChanged(auth, (user) => {
+                    loadingSection.classList.add('hidden');
+                    if (user) {
+                        if (!user.emailVerified) {
+                            showToast('الرجاء تفعيل بريدك الإلكتروني أولاً للوصول لخزنتك. راجع صندوق الوارد.', 'error');
+                            signOut(auth);
+                            return;
+                        }
+
+                        authSection.classList.add('hidden');
+                        masterPasswordSection.classList.remove('hidden');
+                        $('user-email-display').textContent = user.email;
+                        
+                        vaultDocRef = doc(db, 'password-vaults', user.uid);
+                        checkInitialState();
+                    } else {
+                        resetAppState();
+                        authSection.classList.remove('hidden');
+                        setAuthMode('login'); 
+                    }
+                });
+            } catch (error) {
+                loadingSection.innerHTML = '<p class="text-red-400">فشل الاتصال بقاعدة البيانات.</p>';
+            }
+        }
+        
+        function resetAppState() {
+            if (unsubscribe) unsubscribe();
+            masterKey = null; userSalt = null; entries = []; vaultDocRef = null;
+            clearTimeout(inactivityTimeout); 
+            $('auth-error').textContent = ''; $('master-password-error').textContent = ''; $('master-password-input').value = ''; $('auth-email').value = ''; $('auth-password').value = '';
+            appSection.classList.add('hidden'); masterPasswordSection.classList.add('hidden');
+        }
+
+        async function checkInitialState() {
+            try {
+                const docSnap = await getDoc(vaultDocRef);
+                const promptElement = $('master-password-prompt');
+                if (docSnap.exists() && docSnap.data().encrypted) {
+                    promptElement.textContent = 'تم العثور على خزنتك المشفرة. أدخل الرمز المرئي و كلمة المرور لفتحها.';
+                } else {
+                    promptElement.textContent = 'مرحباً بك في خزنتك الجديدة! اختر رمزاً مرئياً واكتب كلمة مرور قوية لتشفير بياناتك.';
+                }
+            } catch (error) {
+                $('master-password-prompt').textContent = 'حدث خطأ في جلب البيانات. تأكد من قواعد الحماية Firestore Rules.';
+            }
+        }
+
+        function listenForEntries() {
+            if (unsubscribe) unsubscribe();
+            unsubscribe = onSnapshot(vaultDocRef, async (docSnap) => {
+                if (docSnap.exists()) {
+                    const encryptedBlob = docSnap.data().encrypted;
+                    if (encryptedBlob && masterKey) {
+                        const decryptedJSON = await decryptData(encryptedBlob, masterKey);
+                        if (decryptedJSON) {
+                            const parsedData = JSON.parse(decryptedJSON);
+                            entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
+                            customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                        } else { entries = []; }
+                    } else { entries = []; }
+                } else { entries = []; }
+                updateCategorySelects();
+                applyFilters();
+            });
+        }
+        
+        async function saveEntries() {
+            if (masterKey && vaultDocRef && userSalt) {
+                const vaultData = { entries: entries, categories: customCategories };
+                const encryptedData = await encryptData(JSON.stringify(vaultData), masterKey);
+                await setDoc(vaultDocRef, { encrypted: encryptedData, salt: userSalt });
+            }
+        }
+        
+        // --- Auth Logic ---
+        function setAuthMode(mode) {
+            authMode = mode;
+            $('auth-error').textContent = '';
+            const btnLoginTab = $('tab-login'), btnRegisterTab = $('tab-register');
+            const title = $('auth-title'), subtitle = $('auth-subtitle'), actionBtn = $('auth-action-btn'), forgotBtn = $('forgot-password-button');
+
+            if (mode === 'login') {
+                btnLoginTab.className = 'flex-1 py-2 text-sm font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+                btnRegisterTab.className = 'flex-1 py-2 text-sm font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+                title.textContent = 'مرحباً بك مجدداً!';
+                subtitle.textContent = 'أدخل بياناتك للوصول إلى خزنتك المشفرة';
+                actionBtn.innerHTML = '<i class="ph-bold ph-sign-in text-lg"></i> دخول للخزنة'; 
+                forgotBtn.classList.remove('hidden');
+            } else {
+                btnRegisterTab.className = 'flex-1 py-2 text-sm font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+                btnLoginTab.className = 'flex-1 py-2 text-sm font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+                title.textContent = 'إنشاء حساب جديد';
+                subtitle.textContent = 'أدخل بريدك وكلمة مرور قوية لإنشاء خزنتك';
+                actionBtn.innerHTML = '<i class="ph-bold ph-user-plus text-lg"></i> إنشاء الحساب'; 
+                forgotBtn.classList.add('hidden');
+            }
+        }
+
+        $('tab-login').addEventListener('click', () => setAuthMode('login'));
+        $('tab-register').addEventListener('click', () => setAuthMode('register'));
+
+        $('auth-action-btn').addEventListener('click', async () => {
+            if (lockoutTimer && Date.now() < lockoutTimer) {
+                const remaining = Math.ceil((lockoutTimer - Date.now()) / 1000);
+                $('auth-error').textContent = `حسابك مقفل مؤقتاً لحمايتك. حاول بعد ${remaining} ثانية.`;
+                return;
+            }
+
+            const email = $('auth-email').value;
+            const password = $('auth-password').value;
+            $('auth-error').textContent = '';
+            if (!email || !password) { $('auth-error').textContent = 'يرجى إدخال البريد الإلكتروني وكلمة المرور.'; return; }
+
+            const btn = $('auth-action-btn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> جاري المعالجة...';
+            btn.disabled = true;
+
+            try {
+                if (authMode === 'login') {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    failedLoginAttempts = 0; 
+                } else {
+                    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+                    await sendEmailVerification(userCred.user);
+                    showToast('تم إنشاء الحساب! تم إرسال رابط التفعيل لبريدك الإلكتروني، برجاء التفعيل أولاً.', 'success');
+                    signOut(auth);
+                    setAuthMode('login');
+                }
+            } catch (error) {
+                failedLoginAttempts++;
+                if (failedLoginAttempts >= 4) {
+                    lockoutTimer = Date.now() + 60000; 
+                    $('auth-error').textContent = 'تم تجاوز الحد الأقصى للمحاولات. تم قفل تسجيل الدخول مؤقتاً لحمايتك.';
+                } else {
+                    if (authMode === 'login') { $('auth-error').textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'; } 
+                    else {
+                        if(error.code === 'auth/email-already-in-use') $('auth-error').textContent = 'هذا البريد مسجل مسبقاً.';
+                        else if (error.code === 'auth/weak-password') $('auth-error').textContent = 'كلمة المرور ضعيفة (يجب أن تكون 6 أحرف على الأقل).';
+                        else $('auth-error').textContent = 'فشل التسجيل. تأكد من صحة البيانات.';
+                    }
+                }
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        });
+
+        $('forgot-password-button').addEventListener('click', async () => {
+            const email = $('auth-email').value;
+            if (!email) { $('auth-error').textContent = 'يرجى كتابة بريدك الإلكتروني في الحقل أولاً.'; return; }
+            $('auth-error').textContent = '';
+            try { await sendPasswordResetEmail(auth, email); showToast('تم إرسال رابط إعادة التعيين لبريدك.', 'success'); } 
+            catch (error) { $('auth-error').textContent = 'فشل الإرسال. تأكد من صحة البريد.'; }
+        });
+
+        $('logout-button').addEventListener('click', () => signOut(auth));
+
+        // --- Master Password Logic (With Backward Compatibility & Auto-Upgrade) ---
+        $('master-password-submit').addEventListener('click', async () => {
+            const password = $('master-password-input').value;
+            const selectedElement = document.querySelector('input[name="sec_element"]:checked').value;
+            if (password.length < 4) { $('master-password-error').textContent = 'كلمة المرور قصيرة جداً.'; return; }
+            $('master-password-error').textContent = '';
+            
+            const btn = $('master-password-submit');
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> جاري فك التشفير...';
+            btn.disabled = true;
+
+            try {
+                const combinedSecret = password + "_" + selectedElement;
+                const docSnap = await getDoc(vaultDocRef);
+                
+                if (!docSnap.exists() || !docSnap.data().encrypted) {
+                    // 🛡️ إنشاء خزانة جديدة: توليد Salt ديناميكي 16-Byte وبـ 600 ألف تكرار
+                    const saltArray = window.crypto.getRandomValues(new Uint8Array(16));
+                    userSalt = btoa(String.fromCharCode.apply(null, saltArray));
+                    masterKey = await deriveKey(combinedSecret, userSalt, ITERATIONS);
+                    
+                    masterPasswordSection.classList.add('hidden'); appSection.classList.remove('hidden');
+                    listenForEntries();
+                    resetInactivityTimer();
+                    showToast('تم إعداد الخزنة بنجاح!', 'success');
+                } else {
+                    // 🔐 فتح خزانة موجودة
+                    const data = docSnap.data();
+                    const encryptedBlob = data.encrypted;
+                    const dbSalt = data.salt;
+
+                    let decryptedData = null;
+                    let needsUpgrade = false;
+
+                    // 🛠️ نظام التوافق الرجعي: تجربة كافة المعايير القديمة والحديثة لفك التشفير
+                    const configsToTry = [
+                        { salt: dbSalt, iters: ITERATIONS }, // المعيار الحديث
+                        { salt: dbSalt || 'somesalt-that-is-not-so-random', iters: 100000 }, // المعيار القديم جداً (ما تسبب في مشكلتك)
+                        { salt: 'somesalt-that-is-not-so-random', iters: ITERATIONS }, // معيار وسيط
+                        { salt: 'somesalt-that-is-not-so-random', iters: 100000 } // احتياطي أخير
+                    ];
+
+                    for (let conf of configsToTry) {
+                        if (!conf.salt) continue;
+                        try {
+                            const tempKey = await deriveKey(combinedSecret, conf.salt, conf.iters);
+                            const result = await decryptData(encryptedBlob, tempKey);
+                            if (result) {
+                                decryptedData = result;
+                                masterKey = tempKey;
+                                userSalt = conf.salt;
+                                // إذا كانت الخزنة مشفرة بالطريقة القديمة، نعلم النظام أنه يجب الترقية
+                                if (conf.salt === 'somesalt-that-is-not-so-random' || conf.iters < ITERATIONS) {
+                                    needsUpgrade = true;
+                                }
+                                break; // نجح فك التشفير، نخرج من الحلقة
+                            }
+                        } catch(e) { } 
+                    }
+
+                    // في حال نجاح فك التشفير بأي من المعايير
+                    if (decryptedData) {
+                        masterPasswordSection.classList.add('hidden'); 
+                        appSection.classList.remove('hidden');
+                        
+                        // 🔄 ترقية تلقائية للخزائن القديمة!
+                        if (needsUpgrade) {
+                            const saltArray = window.crypto.getRandomValues(new Uint8Array(16));
+                            userSalt = btoa(String.fromCharCode.apply(null, saltArray));
+                            masterKey = await deriveKey(combinedSecret, userSalt, ITERATIONS); // التشفير الجديد 600,000
+                            
+                            const parsedData = JSON.parse(decryptedData);
+                            entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
+                            customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                            await saveEntries(); // حفظ بالـ Salt الجديد والإعدادات القوية
+                            showToast('تم ترقية حماية خزنتك لمعيار 600 ألف تكرار بنجاح!', 'success');
+                        } else {
+                            const parsedData = JSON.parse(decryptedData);
+                            entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
+                            customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                        }
+                        
+                        listenForEntries();
+                        resetInactivityTimer();
+                    } else {
+                        $('master-password-error').textContent = 'كلمة المرور أو العنصر المرئي غير صحيح.';
+                    }
+                }
+            } catch (e) { 
+                $('master-password-error').textContent = 'حدث خطأ غير متوقع في التشفير.'; 
+            } 
+            finally { btn.textContent = 'فتح الخزنة'; btn.disabled = false; }
+        });
+
+        // --- DOM Elements Appender & App Logic ---
+        function getFirstLetter(str) { return str.charAt(0).toUpperCase() || '🌐'; }
+        
+        function updateCategorySelects() {
+            const catInput = $('category-input');
+            const editCatInput = $('edit-category-input');
+            catInput.innerHTML = ''; editCatInput.innerHTML = ''; 
+            
+            const createOpt = (val) => { const o = document.createElement('option'); o.value = val; o.textContent = val; return o; };
+            catInput.appendChild(createOpt('عام')); editCatInput.appendChild(createOpt('عام'));
+            customCategories.forEach(cat => { catInput.appendChild(createOpt(cat)); editCatInput.appendChild(createOpt(cat)); });
+        }
+
+        function renderCategoryTabs() {
+            const tabsContainer = $('category-tabs');
+            tabsContainer.innerHTML = '';
+            
+            ['الكل', 'عام', ...customCategories].forEach(cat => {
+                const btn = document.createElement('button');
+                btn.textContent = cat; 
+                btn.className = `whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    currentCategory === cat ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-white'
+                }`;
+                btn.onclick = () => { currentCategory = cat; applyFilters(); };
+                tabsContainer.appendChild(btn);
+            });
+
+            const manageBtn = document.createElement('button');
+            manageBtn.innerHTML = '<i class="ph-bold ph-gear"></i> إدارة'; // Static safe
+            manageBtn.className = `whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-white flex items-center gap-1 mr-2`;
+            manageBtn.onclick = () => { renderManageCategories(); $('manage-categories-modal').classList.remove('hidden'); };
+            tabsContainer.appendChild(manageBtn);
+        }
+
+        function applyFilters() {
+            const query = $('search-input').value.toLowerCase();
+            displayedEntries = entries.filter(entry => {
+                const entryCat = entry.category || 'عام'; 
+                const matchesCategory = currentCategory === 'الكل' || entryCat === currentCategory;
+                const matchesSearch = entry.website.toLowerCase().includes(query) || entry.username.toLowerCase().includes(query);
+                return matchesCategory && matchesSearch;
+            });
+            renderCategoryTabs();
+            renderEntries();
+        }
+
+        $('search-input').addEventListener('input', applyFilters);
+
+        function renderEntries() {
+            const grid = $('entries-grid');
+            grid.innerHTML = ''; // safe clearing
+            
+            if (displayedEntries.length === 0) {
+                $('no-entries-message').classList.remove('hidden');
+            } else {
+                $('no-entries-message').classList.add('hidden');
+                
+                displayedEntries.forEach((entry) => {
+                    const originalIndex = entries.findIndex(e => e.website === entry.website && e.username === entry.username);
+                    const entryCat = entry.category || 'عام';
+                    const colorId = entry.color || 'default';
+                    const colorObj = CARD_COLORS.find(c => c.id === colorId) || CARD_COLORS[0];
+                    
+                    const card = document.createElement('div');
+                    card.className = 'glass-card rounded-2xl p-5 shadow-lg transition-all duration-300 flex flex-col h-full hover:-translate-y-1';
+                    if(colorId !== 'default') card.style.background = colorObj.bg;
+
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between mb-4 w-full">
+                            <div class="flex items-start gap-3 flex-grow min-w-0">
+                                <div class="dyn-icon w-12 h-12 min-w-[3rem] rounded-xl bg-black bg-opacity-20 flex flex-shrink-0 items-center justify-center text-2xl font-bold text-white border border-white border-opacity-10 shadow-inner overflow-hidden relative group-hover:scale-105 transition-transform duration-300"></div>
+                                <div class="flex flex-col min-w-0 pt-0.5">
+                                    <h3 class="dyn-website font-bold text-[16px] leading-tight text-white break-words line-clamp-2" dir="auto"></h3>
+                                    <span class="dyn-cat inline-block px-2 py-0.5 mt-1 bg-black bg-opacity-20 border border-white border-opacity-10 rounded-md text-[10px] text-gray-300 self-start"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-auto mb-4 bg-black bg-opacity-20 hover:bg-opacity-30 border border-white border-opacity-5 rounded-xl p-3 flex justify-between items-center group/user transition-colors">
+                            <p class="dyn-username text-sm font-mono text-gray-200 truncate text-left w-full" dir="ltr"></p>
+                            <button class="btn-copy-u text-gray-400 hover:text-white bg-black bg-opacity-20 hover:bg-opacity-50 p-1.5 rounded-lg transition-all ml-2" title="نسخ البريد/الرقم"><i class="ph-bold ph-copy text-lg"></i></button>
+                        </div>
+                        <div class="flex gap-2 pt-4 border-t border-white border-opacity-10 mt-auto">
+                            <button class="btn-copy-p flex-1 bg-black bg-opacity-20 hover:bg-emerald-500 hover:bg-opacity-40 text-gray-300 hover:text-white py-3 rounded-xl border border-transparent transition-all flex justify-center items-center" title="نسخ كلمة المرور"><i class="ph-bold ph-key text-2xl drop-shadow-md"></i></button>
+                            <button class="btn-edit flex-1 bg-black bg-opacity-20 hover:bg-blue-500 hover:bg-opacity-40 text-gray-300 hover:text-white py-3 rounded-xl border border-transparent transition-all flex justify-center items-center" title="تعديل الحساب"><i class="ph-bold ph-pencil-simple text-2xl drop-shadow-md"></i></button>
+                            <button class="btn-delete flex-1 bg-black bg-opacity-20 hover:bg-red-500 hover:bg-opacity-40 text-gray-300 hover:text-white py-3 rounded-xl border border-transparent transition-all flex justify-center items-center" title="حذف الحساب"><i class="ph-bold ph-trash text-2xl drop-shadow-md"></i></button>
+                        </div>
+                    `;
+
+                    card.querySelector('.dyn-icon').textContent = getFirstLetter(entry.website);
+                    card.querySelector('.dyn-website').textContent = entry.website;
+                    card.querySelector('.dyn-website').title = entry.website;
+                    card.querySelector('.dyn-cat').textContent = entryCat;
+                    card.querySelector('.dyn-username').textContent = entry.username;
+
+                    card.querySelector('.btn-copy-u').addEventListener('click', () => window.copyUsername(originalIndex));
+                    card.querySelector('.btn-copy-p').addEventListener('click', () => window.copyPassword(originalIndex));
+                    card.querySelector('.btn-edit').addEventListener('click', () => window.editEntry(originalIndex));
+                    card.querySelector('.btn-delete').addEventListener('click', () => window.deleteEntry(originalIndex));
+
+                    grid.appendChild(card);
+                });
+            }
+        }
+
+        // --- Category Management Logic ---
+        function renderManageCategories() {
+            const list = $('categories-list');
+            list.innerHTML = '';
+            
+            if(customCategories.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">لا توجد تصنيفات مخصصة.</p>';
+                return;
+            }
+
+            customCategories.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-gray-800 border border-gray-700 p-3 rounded-xl';
+                const span = document.createElement('span');
+                span.className = 'text-white text-sm';
+                span.textContent = cat; 
+                const btn = document.createElement('button');
+                btn.className = 'text-gray-400 hover:text-red-400 transition-colors p-1';
+                btn.title = 'حذف التصنيف';
+                btn.innerHTML = '<i class="ph-bold ph-trash"></i>';
+                btn.addEventListener('click', () => window.deleteCategory(cat));
+
+                item.appendChild(span); item.appendChild(btn); list.appendChild(item);
+            });
+        }
+
+        $('add-category-btn').addEventListener('click', async () => {
+            const input = $('new-category-input'); const newCat = input.value.trim();
+            if(!newCat) { showToast('اكتب اسم التصنيف أولاً', 'error'); return; }
+            if(newCat === 'الكل' || newCat === 'عام' || customCategories.includes(newCat)) { showToast('هذا التصنيف موجود بالفعل', 'error'); return; }
+
+            customCategories.push(newCat); await saveEntries(); 
+            input.value = ''; renderManageCategories(); updateCategorySelects(); applyFilters(); showToast('تمت إضافة التصنيف بنجاح', 'success');
+        });
+
+        window.deleteCategory = function(catName) {
+            showConfirm(`هل أنت متأكد من حذف تصنيف "${catName}"؟ سيتم نقل حساباته إلى "عام".`, async (confirmed) => {
+                if (confirmed) {
+                    entries.forEach(entry => { if (entry.category === catName) entry.category = 'عام'; });
+                    customCategories = customCategories.filter(c => c !== catName);
+                    if (currentCategory === catName) currentCategory = 'الكل';
+                    await saveEntries(); renderManageCategories(); updateCategorySelects(); applyFilters(); showToast('تم الحذف ونقل الحسابات بنجاح', 'success');
+                }
+            });
+        };
+
+        // --- Global Handlers ---
+        window.openAddModal = function() {
+            $('website-input').value = ''; $('username-input').value = ''; $('password-input').value = ''; $('category-input').value = 'عام';
+            currentAddColor = 'default'; renderColorPicker('add-color-picker', currentAddColor, (id) => currentAddColor = id);
+            $('add-modal').classList.remove('hidden');
+        };
+
+        window.viewEntry = function(index) {
+            const entry = entries[index];
+            $('modal-icon').textContent = getFirstLetter(entry.website); $('modal-website').textContent = entry.website;
+            $('modal-category').textContent = entry.category || 'عام'; $('modal-username').textContent = entry.username;
+            $('modal-password-text').textContent = entry.password;
+            const colorId = entry.color || 'default'; const colorObj = CARD_COLORS.find(c => c.id === colorId) || CARD_COLORS[0];
+            $('view-modal').querySelector('.glass-card').style.background = colorObj.bg; $('view-modal').classList.remove('hidden');
+        };
+
+        window.copyPassword = function(index) { performCopy(entries[index].password, 'تم نسخ كلمة المرور السريّة'); };
+        window.copyUsername = function(index) { performCopy(entries[index].username, 'تم نسخ البريد/الرقم بنجاح'); };
+
+        window.editEntry = function(index) {
+            editingIndex = index; const entry = entries[index];
+            $('edit-website-input').value = entry.website; $('edit-category-input').value = entry.category || 'عام';
+            $('edit-username-input').value = entry.username; $('edit-password-input').value = entry.password;
+            currentEditColor = entry.color || 'default'; renderColorPicker('edit-color-picker', currentEditColor, (id) => currentEditColor = id);
+            $('edit-modal').classList.remove('hidden');
+        };
+
+        window.deleteEntry = function(index) {
+            showConfirm(`هل أنت متأكد من حذف الحساب الخاص بـ "${entries[index].website}"؟`, (confirmed) => {
+                if (confirmed) { entries.splice(index, 1); saveEntries(); showToast('تم الحذف بنجاح', 'success'); }
+            });
+        };
+
+        $('modal-close').addEventListener('click', () => $('view-modal').classList.add('hidden'));
+
+        $('add-entry').addEventListener('click', async () => {
+            const website = $('website-input').value.trim(), category = $('category-input').value, username = $('username-input').value.trim(), password = $('password-input').value.trim();
+            if (website && username && password) {
+                entries.push({ website, category, username, password, color: currentAddColor });
+                await saveEntries(); $('add-modal').classList.add('hidden'); showToast('تم التشفير والحفظ بنجاح', 'success');
+            } else { showToast('يرجى ملء جميع الحقول', 'error'); }
+        });
+
+        $('edit-cancel-btn').addEventListener('click', () => { $('edit-modal').classList.add('hidden'); editingIndex = null; });
+
+        $('edit-save-btn').addEventListener('click', async () => {
+            if (editingIndex === null) return;
+            const website = $('edit-website-input').value.trim(), category = $('edit-category-input').value, username = $('edit-username-input').value.trim(), password = $('edit-password-input').value.trim();
+            if (website && username && password) {
+                entries[editingIndex] = { website, category, username, password, color: currentEditColor };
+                await saveEntries(); $('edit-modal').classList.add('hidden'); editingIndex = null; showToast('تم حفظ التعديلات', 'success');
+            } else { showToast('يرجى ملء جميع الحقول', 'error'); }
+        });
+
+        $('toggle-add-pwd').addEventListener('click', () => {
+            const pwdInput = $('password-input'), icon = $('toggle-add-pwd').querySelector('i');
+            if (pwdInput.type === 'password') { pwdInput.type = 'text'; icon.className = 'ph-bold ph-eye-slash'; } 
+            else { pwdInput.type = 'password'; icon.className = 'ph-bold ph-eye'; }
+        });
+
+        $('generate-password').addEventListener('click', () => {
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~";
+            let retVal = ""; const array = new Uint32Array(16); window.crypto.getRandomValues(array);
+            for (let i = 0; i < 16; i++) retVal += charset[array[i] % charset.length];
+            $('password-input').value = retVal; $('password-input').type = 'text';
+            setTimeout(() => { $('password-input').type = 'password'; }, 2000);
+        });
+        
+        // --- Initialize ---
+        initializeFirebase();
+    </script>
+</body>
+</html>
