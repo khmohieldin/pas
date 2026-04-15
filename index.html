@@ -10,11 +10,12 @@
          في بيئة الإنتاج الحقيقية، يجب عمل Compile لـ Tailwind وإزالة هذه الاستثناءات. -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' blob:; 
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; 
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://*.gstatic.com https://*.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; 
         style-src 'self' 'unsafe-inline' https:; 
         font-src 'self' data: https:; 
-        connect-src 'self' blob: https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com https://www.google.com/recaptcha/ https://unpkg.com https://www.gstatic.com;
-        frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/auth/;
+        connect-src 'self' blob: https://*.googleapis.com https://*.google.com https://unpkg.com https://*.gstatic.com;
+        frame-src 'self' https://*.google.com https://*.gstatic.com https://recaptcha.google.com;
+        worker-src 'self' blob:;
         img-src 'self' data: https:;
         object-src 'none';
     ">
@@ -70,6 +71,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
             transition: all 0.3s ease;
+            direction: ltr; /* Force LTR for emails/passwords internally if needed */
         }
         .input-field:focus {
             border-color: #0ea5e9;
@@ -78,6 +80,7 @@
         }
         
         select.input-field {
+            direction: rtl; /* Keep selects RTL */
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
@@ -212,11 +215,11 @@
             <div class="space-y-4 relative">
                 <div class="relative">
                     <i class="ph ph-envelope-simple absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
-                    <input type="email" id="auth-email" class="input-field w-full py-3 pr-10 pl-4 rounded-xl" placeholder="البريد الإلكتروني">
+                    <input type="email" id="auth-email" class="input-field w-full py-3 pr-10 pl-4 rounded-xl text-right" placeholder="البريد الإلكتروني">
                 </div>
                 <div class="relative">
                     <i class="ph ph-lock absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
-                    <input type="password" id="auth-password" class="input-field w-full py-3 pr-10 pl-4 rounded-xl" placeholder="كلمة المرور (6 أحرف على الأقل)">
+                    <input type="password" id="auth-password" class="input-field w-full py-3 pr-10 pl-4 rounded-xl text-right" placeholder="كلمة المرور (6 أحرف على الأقل)">
                 </div>
                 
                 <div class="pt-4 flex flex-col gap-3">
@@ -326,7 +329,7 @@
             <div id="no-entries-message" class="hidden text-center py-20">
                 <i class="ph-twotone ph-folder-open text-7xl text-gray-600 mb-4 inline-block"></i>
                 <h3 class="text-xl font-bold text-gray-300">لا يوجد حسابات هنا</h3>
-                <p class="text-gray-500 mt-2">اضغط على زر "إضافة حساب" لحفظ بياناتك بأمان في this التصنيف.</p>
+                <p class="text-gray-500 mt-2">اضغط على زر "إضافة حساب" لحفظ بياناتك بأمان في هذا التصنيف.</p>
             </div>
         </div>
     </div>
@@ -370,7 +373,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-1">
                         <label class="block text-sm text-gray-400 mb-1">اسم الموقع</label>
-                        <input type="text" id="website-input" placeholder="مثال: Google" class="input-field w-full p-3 rounded-xl">
+                        <input type="text" id="website-input" placeholder="مثال: Google" class="input-field w-full p-3 rounded-xl text-right">
                     </div>
                     <div class="col-span-1">
                         <label class="block text-sm text-gray-400 mb-1">التصنيف</label>
@@ -422,7 +425,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-1">
                         <label class="block text-xs text-gray-400 mb-1">اسم الموقع</label>
-                        <input type="text" id="edit-website-input" class="input-field w-full p-3 rounded-xl">
+                        <input type="text" id="edit-website-input" class="input-field w-full p-3 rounded-xl text-right">
                     </div>
                     <div class="col-span-1">
                         <label class="block text-xs text-gray-400 mb-1">تغيير التصنيف</label>
@@ -505,7 +508,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
+        import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
         // --- DOM Elements ---
         const $ = id => document.getElementById(id);
@@ -744,13 +747,26 @@
 
                 const app = initializeApp(firebaseConfig);
 
-                // ✅ تم إضافة الـ Site Key الخاص بك وإزالة شرط التجربة
                 const recaptchaKey = '6LfL8LcsAAAAAITPTkl-pWekq7HLx_HYB6Jj8qVV';
+                
                 try {
-                    initializeAppCheck(app, {
+                    const appCheck = initializeAppCheck(app, {
                         provider: new ReCaptchaV3Provider(recaptchaKey), 
                         isTokenAutoRefreshEnabled: true
                     });
+                    
+                    // دالة تشخيص للتأكد من جلب التوكن بنجاح
+                    getToken(appCheck, false).then(() => {
+                        console.log("✅ App Check is working and token obtained!");
+                    }).catch((err) => {
+                        console.error("❌ App Check Error: ", err);
+                        if (err.message && err.message.includes('403')) {
+                            console.error("💡 خطأ 403: السيرفر يرفض التوكن! الأسباب:\n1. الـ Secret Key في إعدادات App Check بـ Firebase غير صحيح (تأكد من نسخه من موقع reCAPTCHA بشكل صحيح).\n2. مفتاح الـ API مقيد في Google Cloud ولا يسمح بـ Firebase App Check API.\n3. لم يتم تفعيل App Check API في المشروع أصلاً.");
+                        } else if (err.message && err.message.includes('recaptcha-error')) {
+                            console.error("💡 السبب المحتمل: الدومين غير مسجل في reCAPTCHA (أضف localhost و 127.0.0.1 إذا كنت تجرب محلياً) أو أن مانع الإعلانات (AdBlocker) يمنع السكربت.");
+                        }
+                    });
+
                 } catch(e) { console.warn('App check init failed', e); }
 
                 db = getFirestore(app);
