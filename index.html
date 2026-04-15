@@ -743,15 +743,14 @@
 
                 const app = initializeApp(firebaseConfig);
 
-                const recaptchaKey = 'YOUR_RECAPTCHA_SITE_KEY_HERE';
-                if (recaptchaKey !== 'YOUR_RECAPTCHA_SITE_KEY_HERE') {
-                    try {
-                        initializeAppCheck(app, {
-                            provider: new ReCaptchaV3Provider(recaptchaKey), 
-                            isTokenAutoRefreshEnabled: true
-                        });
-                    } catch(e) { console.warn('App check init missing key, proceeding in dev mode'); }
-                }
+                // ✅ تم إضافة الـ Site Key الخاص بك وإزالة شرط التجربة
+                const recaptchaKey = '6LfL8LcsAAAAAITPTkl-pWekq7HLx_HYB6Jj8qVV';
+                try {
+                    initializeAppCheck(app, {
+                        provider: new ReCaptchaV3Provider(recaptchaKey), 
+                        isTokenAutoRefreshEnabled: true
+                    });
+                } catch(e) { console.warn('App check init failed', e); }
 
                 db = getFirestore(app);
                 auth = getAuth(app);
