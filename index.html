@@ -9,14 +9,13 @@
     <!-- ملاحظة أمنية: استخدام 'unsafe-inline' و 'unsafe-eval' ضروري حصراً لعمل مكتبة Tailwind CDN في بيئة المتصفح. 
          في بيئة الإنتاج الحقيقية، يجب عمل Compile لـ Tailwind وإزالة هذه الاستثناءات. -->
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' blob:; 
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://*.gstatic.com https://*.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; 
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; 
         style-src 'self' 'unsafe-inline' https:; 
         font-src 'self' data: https:; 
-        connect-src 'self' blob: https://*.googleapis.com https://*.google.com https://unpkg.com https://*.gstatic.com;
-        frame-src 'self' https://*.google.com https://*.gstatic.com https://recaptcha.google.com;
-        worker-src 'self' blob:;
+        connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseappcheck.googleapis.com https://unpkg.com https://www.gstatic.com;
         img-src 'self' data: https:;
+        manifest-src 'self' blob:;
         object-src 'none';
     ">
 
@@ -25,6 +24,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- html2canvas and jsPDF for secure PDF export -->
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     
@@ -39,11 +41,11 @@
                 extend: {
                     fontFamily: { sans: ['Cairo', 'sans-serif'] },
                     colors: {
-                        dark: '#0f172a',
-                        card: '#1e293b',
-                        primary: '#0ea5e9',
-                        primaryDark: '#0284c7',
-                        accent: '#10b981'
+                        dark: '#090d16',
+                        card: '#0f172a',
+                        primary: '#10b981',
+                        primaryDark: '#047857',
+                        accent: '#34d399'
                     }
                 }
             }
@@ -51,40 +53,79 @@
     </script>
     <style>
         body {
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            background-color: #090d16;
+            background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), #090d16);
             color: #f8fafc;
             min-height: 100vh;
+            position: relative;
+        }
+
+        /* Cyberpunk Grid Background Pattern */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: linear-gradient(rgba(16, 185, 129, 0.007) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(16, 185, 129, 0.007) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: -1;
         }
         
-        /* Glassmorphism Classes */
+        /* Glassmorphism Classes with Neon Cyber Green highlights */
         .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(9, 13, 22, 0.95));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(16, 185, 129, 0.03);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), transparent);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        .glass-card:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.05);
+            transform: translateY(-4px) scale(1.01);
+            background: linear-gradient(135deg, rgba(20, 35, 50, 0.9), rgba(12, 22, 32, 0.98));
+        }
+        /* Grid pattern on hover */
+        .glass-card:hover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(16, 185, 129, 0.15) 1px, transparent 0);
+            background-size: 14px 14px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.4;
         }
 
         .input-field {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(9, 13, 22, 0.7);
+            border: 1px solid rgba(16, 185, 129, 0.25);
             color: white;
             transition: all 0.3s ease;
-            direction: ltr; /* Force LTR for emails/passwords internally if needed */
         }
         .input-field:focus {
-            border-color: #0ea5e9;
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+            border-color: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
             outline: none;
         }
         
         select.input-field {
-            direction: rtl; /* Keep selects RTL */
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2310b981'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: left 1rem center;
             background-size: 1.2em;
@@ -92,12 +133,43 @@
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #162421; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.1); }
+        ::-webkit-scrollbar-thumb:hover { background: #1f3d35; }
         
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* Drag and Drop styling */
+        .dragging {
+            opacity: 0.35;
+            border: 2px dashed #10b981 !important;
+            transform: scale(0.95);
+            box-shadow: none !important;
+        }
+        .drag-over-card {
+            border: 2px solid #34d399 !important;
+            box-shadow: 0 0 25px rgba(52, 211, 153, 0.3) !important;
+            transform: scale(1.02);
+        }
+        /* Cyber scanner animation */
+        @keyframes cyber-scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .drag-over-card::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #34d399, transparent);
+            box-shadow: 0 0 8px #34d399, 0 0 15px #34d399;
+            animation: cyber-scan 1.5s linear infinite;
+            z-index: 10;
+            pointer-events: none;
+        }
 
         /* Element Selector Radio */
         .element-radio:checked + label {
@@ -236,7 +308,7 @@
         </div>
 
         <!-- Master Password Section -->
-        <div id="master-password-section" class="hidden glass-card rounded-2xl p-8 max-w-md mx-auto slide-up border-t-4 border-t-accent">
+        <div id="master-password-section" class="hidden glass-card rounded-2xl p-8 max-w-md mx-auto slide-up border-t-4 border-t-accent" title="بوابة فك التشفير الآمنة: أدخل رمزك المرئي والمفتاح للولوج">
             <div class="text-center mb-6">
                 <i class="ph-fill ph-lock-key text-4xl text-accent mb-2"></i>
                 <h2 class="text-2xl font-bold text-white">مفتاح فك التشفير</h2>
@@ -244,39 +316,59 @@
             </div>
             
             <div class="space-y-6">
-                <!-- Visual Seal Selection -->
-                <div>
+                <!-- Lock Screen Type tabs -->
+                <div class="flex bg-gray-800 bg-opacity-60 p-1.5 rounded-xl border border-gray-700 shadow-inner" title="اختر طريقة فتح الخزنة: بكلمة مرورك أو بالنمط المرسوم">
+                    <button id="lock-tab-pwd" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all">كلمة المرور</button>
+                    <button id="lock-tab-pattern" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all">النمط المرسوم</button>
+                </div>
+
+                <!-- Visual Seal Selection (Grid of 25 Security Elements) -->
+                <div title="اختر رمز الحماية المرئي؛ يتم دمجه أمنياً مع مفتاحك لتوليد مفتاح التشفير">
                     <p class="text-sm text-gray-300 mb-3 font-semibold">1. اختر عنصر الحماية المرئي الخاص بك:</p>
-                    <div class="grid grid-cols-5 gap-2" id="security-elements">
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_fire" value="FIRE" class="hidden element-radio" checked><label for="elem_fire" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="النار"><span class="text-2xl">🔥</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_water" value="WATER" class="hidden element-radio"><label for="elem_water" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الماء"><span class="text-2xl">🌊</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_earth" value="EARTH" class="hidden element-radio"><label for="elem_earth" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الأرض"><span class="text-2xl">🌿</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_air" value="AIR" class="hidden element-radio"><label for="elem_air" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الهواء"><span class="text-2xl">💨</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_lightning" value="LIGHTNING" class="hidden element-radio"><label for="elem_lightning" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="البرق"><span class="text-2xl">⚡</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_ice" value="ICE" class="hidden element-radio"><label for="elem_ice" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الجليد"><span class="text-2xl">❄️</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_moon" value="MOON" class="hidden element-radio"><label for="elem_moon" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="القمر"><span class="text-2xl">🌙</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_sun" value="SUN" class="hidden element-radio"><label for="elem_sun" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الشمس"><span class="text-2xl">☀️</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_star" value="STAR" class="hidden element-radio"><label for="elem_star" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="النجمة"><span class="text-2xl">⭐</span></label></div>
-                        <div class="relative"><input type="radio" name="sec_element" id="elem_diamond" value="DIAMOND" class="hidden element-radio"><label for="elem_diamond" class="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700" title="الجوهرة"><span class="text-2xl">💎</span></label></div>
+                    <div class="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto p-1.5 border border-gray-700 rounded-xl bg-black bg-opacity-20 hide-scrollbar" id="security-elements">
+                        <!-- Populated dynamically by JS -->
                     </div>
                 </div>
 
-                <div>
+                <!-- Password input field -->
+                <div id="master-password-input-container">
                     <p class="text-sm text-gray-300 mb-2 font-semibold">2. أدخل كلمة المرور الرئيسية:</p>
                     <div class="relative">
                         <i class="ph ph-key absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
-                        <input type="password" id="master-password-input" class="input-field w-full py-3 pr-10 pl-4 rounded-xl text-center tracking-widest" placeholder="••••••••">
+                        <input type="password" id="master-password-input" class="input-field w-full py-3 pr-10 pl-12 rounded-xl text-center tracking-widest" placeholder="••••••••" title="اكتب كلمة المرور الرئيسية للخزنة">
+                        <button id="toggle-master-pwd" type="button" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1" title="إظهار أو إخفاء كلمة المرور الرئيسية">
+                            <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                    <!-- Master Password Strength meter -->
+                    <div class="mt-2" id="master-strength-container" title="مؤشر قوة وتعقيد مفتاح التشفير الرئيسي الخاص بك">
+                        <div class="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                            <div id="master-pwd-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <p id="master-pwd-strength-text" class="text-[11px] text-gray-400 mt-1 h-4"></p>
                     </div>
                 </div>
 
-                <button id="master-password-submit" class="w-full bg-accent hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                <!-- Pattern Lock drawing container -->
+                <div id="master-pattern-input-container" class="hidden">
+                    <p class="text-sm text-gray-300 mb-2 font-semibold">2. ارسم النمط الخاص بك:</p>
+                    <div class="relative p-2 bg-black bg-opacity-30 rounded-2xl border border-gray-700 max-w-[280px] mx-auto">
+                        <canvas id="lock-pattern-canvas" width="260" height="260" class="block cursor-pointer mx-auto" title="اضغط واسحب لتوصيل النقاط ورسم نمط الحماية"></canvas>
+                        <button id="clear-lock-pattern" type="button" class="absolute bottom-2 left-2 text-[10px] bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded-md transition-all">إعادة الرسم</button>
+                    </div>
+                </div>
+
+                <button id="master-password-submit" class="w-full bg-accent hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-[0_0_15px_rgba(16,185,129,0.4)]" title="اضغط لفك تشفير خزانة حساباتك وفتحها">
                     فتح الخزنة
                 </button>
                 <p id="master-password-error" class="text-red-400 text-sm text-center h-5"></p>
+                <div class="text-center mt-3">
+                    <button id="forgot-master-key-btn" type="button" class="text-xs text-gray-400 hover:text-emerald-400 transition-colors border-b border-transparent hover:border-emerald-400 pb-0.5" title="استخدم مفتاح الاستعادة الطارئ لفتح الخزنة إذا نسيت كلمة المرور الرئيسية">نسيت مفتاح فك التشفير؟</button>
+                </div>
             </div>
             
-            <div class="mt-4 p-3 bg-blue-900 bg-opacity-30 border border-blue-800 rounded-lg text-xs text-blue-200">
-                <i class="ph-fill ph-info mr-1"></i> يتم دمج <b>العنصر المرئي</b> مع <b>كلمة المرور</b> لتوليد مفتاح تشفير معقد لا يمكن كسره.
+            <div class="mt-4 p-3 bg-emerald-950 bg-opacity-40 border border-emerald-800 rounded-lg text-xs text-emerald-200">
+                <i class="ph-fill ph-info mr-1"></i> يتم دمج <b>العنصر المرئي</b> مع <b>مفتاحك (كلمة المرور/النمط)</b> لتوليد مفتاح تشفير معقد لا يمكن كسره.
             </div>
         </div>
 
@@ -295,22 +387,61 @@
                     </div>
                 </div>
                 
-                <div class="flex gap-3 w-full md:w-auto">
-                    <button onclick="window.openAddModal()" class="flex-1 md:flex-none bg-primary hover:bg-primaryDark text-white px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors">
-                        <i class="ph-bold ph-plus"></i> إضافة حساب
+                <div class="flex gap-3 w-full md:w-auto flex-wrap">
+                    <button onclick="window.openAddModal()" class="flex-grow md:flex-none bg-primary hover:bg-primaryDark text-white px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-colors text-sm" title="إضافة حساب جديد وتشفير بياناته">
+                        <i class="ph-bold ph-plus text-lg"></i> إضافة حساب
                     </button>
-                    <button id="logout-button" class="flex-1 md:flex-none bg-red-500 hover:bg-red-600 bg-opacity-20 hover:bg-opacity-100 text-red-400 hover:text-white border border-red-500 px-5 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all">
-                        <i class="ph-bold ph-sign-out"></i> خروج
+                    <button onclick="window.openSettingsModal()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-colors border border-gray-700 text-sm" title="إعدادات الأمان: تغيير كلمة المرور أو نمط الرسم والعنصر المرئي">
+                        <i class="ph-bold ph-gear text-lg"></i> إعدادات الأمان
                     </button>
+                    <button onclick="window.openPdfExportModal()" class="bg-gray-800 hover:bg-gray-700 text-red-400 hover:text-red-300 px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-colors border border-gray-700 text-sm" title="تصدير جميع كلمات المرور والحسابات في ملف PDF محمي بكلمة مرور">
+                        <i class="ph-bold ph-file-pdf text-lg"></i> تصدير PDF 📄
+                    </button>
+                    <button id="logout-button" class="flex-grow md:flex-none bg-red-500 hover:bg-red-600 bg-opacity-20 hover:bg-opacity-100 text-red-400 hover:text-white border border-red-500 px-4 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all text-sm" title="تسجيل الخروج وقفل الخزنة ومسح الذاكرة للحماية">
+                        <i class="ph-bold ph-sign-out text-lg"></i> خروج
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security Audit Dashboard -->
+            <div id="security-audit-panel" class="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4 glass-card p-5 rounded-2xl border border-gray-700 shadow-xl transition-all duration-300">
+                <div class="text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer" id="audit-total-card" title="إجمالي عدد الحسابات والبيانات المخزنة والمحمية داخل خزنتك السحابية حالياً">
+                    <p class="text-xs text-gray-400">إجمالي الحسابات</p>
+                    <p id="audit-total-val" class="text-3xl font-extrabold text-white mt-1">0</p>
+                </div>
+                <div class="text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer border-r-4 border-r-emerald-500" id="audit-health-card" title="معدل صحة الخزنة: النسبة المئوية العامة لأمان حساباتك بناءً على تعقيد كلمات المرور وقوتها وعدم تكرارها. اضغط هنا لإعادة عرض كل الحسابات">
+                    <p class="text-xs text-gray-400">معدل صحة الخزنة</p>
+                    <p id="audit-health-val" class="text-3xl font-extrabold text-emerald-400 mt-1">100%</p>
+                </div>
+                <div class="text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer border-r-4 border-r-red-500" id="audit-weak-card" title="عدد الحسابات المحفوظة التي تستخدم كلمات مرور ضعيفة أو قصيرة (أقل من 8 أحرف). اضغط هنا لعرضها فقط لتقوم بتحديثها وحماية حسابك">
+                    <p class="text-xs text-gray-400">حسابات بكلمات ضعيفة</p>
+                    <p id="audit-weak-val" class="text-3xl font-extrabold text-red-400 mt-1">0</p>
+                </div>
+                <div class="text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer border-r-4 border-r-orange-500" id="audit-reused-card" title="عدد الحسابات التي تستخدم كلمات مرور مكررة ومتطابقة في مواقع متعددة. اضغط هنا لعرضها فقط لتغييرها وتجنب الاختراق المتسلسل لحساباتك">
+                    <p class="text-xs text-gray-400">حسابات بكلمات مكررة</p>
+                    <p id="audit-reused-val" class="text-3xl font-extrabold text-orange-400 mt-1">0</p>
                 </div>
             </div>
 
             <!-- Search Bar & Categories -->
             <div class="max-w-3xl mx-auto mb-8">
-                <!-- Search -->
-                <div class="relative mb-4">
-                    <i class="ph ph-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
-                    <input type="text" id="search-input" class="input-field w-full py-3 pr-12 pl-4 rounded-xl text-center" placeholder="ابحث في كلمات المرور الخاصة بك...">
+                <!-- Search and Sorting -->
+                <div class="flex flex-col md:flex-row gap-3 mb-4">
+                    <div class="relative flex-grow">
+                        <i class="ph ph-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl"></i>
+                        <input type="text" id="search-input" class="input-field w-full py-3 pr-12 pl-4 rounded-xl text-right" placeholder="ابحث في كلمات المرور الخاصة بك...">
+                    </div>
+                    <div class="relative min-w-[170px]">
+                        <select id="sort-select" class="input-field w-full py-3 px-4 rounded-xl cursor-pointer text-sm font-semibold select-none">
+                            <option value="custom">↕️ ترتيب مخصص (سحب وإفلات)</option>
+                            <option value="name-asc">🔠 ترتيب أبجدي (أ - ي)</option>
+                            <option value="name-desc">🔠 ترتيب أبجدي (ي - أ)</option>
+                            <option value="date-new" selected>⏱️ الأحدث أولاً</option>
+                            <option value="date-old">⏱️ الأقدم أولاً</option>
+                            <option value="fav-first">★ المفضلة أولاً</option>
+                            <option value="strength-weak">⚠️ الضعيفة أولاً</option>
+                        </select>
+                    </div>
                 </div>
                 <!-- Category Tabs -->
                 <div class="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar w-full" id="category-tabs-container">
@@ -361,6 +492,105 @@
         </div>
     </div>
 
+    <!-- Security Settings Modal (Password/Pattern re-keying Settings) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-md border border-gray-600 shadow-2xl transform transition-all slide-up my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-white flex items-center gap-2"><i class="ph-bold ph-gear text-primary"></i> إعدادات الأمان والتشفير</h3>
+                <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            
+            <!-- Step 1: Verify Current Master Key -->
+            <div id="settings-verify-step" class="space-y-4">
+                <p class="text-xs text-yellow-400 border-r-2 border-r-yellow-500 pr-2">تنبيه أمني: لتغيير معايير الحماية، يرجى أولاً التحقق من مفتاح فك التشفير الحالي لفتح البيانات وإعادة تشفيرها بالمفتاح الجديد.</p>
+                
+                <!-- Current Key Method Selection -->
+                <div class="flex bg-gray-800 bg-opacity-60 p-1 rounded-xl mb-4 border border-gray-700 shadow-inner">
+                    <button id="settings-verify-tab-pwd" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all">بكلمة المرور</button>
+                    <button id="settings-verify-tab-pattern" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all">بالنمط المرسوم</button>
+                </div>
+                
+                <!-- Verify Elements Grid -->
+                <div title="اختر رمز حمايتك الحالي للتحقق">
+                    <p class="text-xs text-gray-400 mb-2 font-semibold">1. اختر عنصر الحماية الحالي:</p>
+                    <div class="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto p-1.5 border border-gray-700 rounded-lg bg-black bg-opacity-20 hide-scrollbar" id="settings-verify-elements">
+                        <!-- Filled by JS dynamically -->
+                    </div>
+                </div>
+
+                <!-- Verify password input -->
+                <div id="settings-verify-pwd-container">
+                    <p class="text-xs text-gray-400 mb-2 font-semibold">2. أدخل كلمة المرور الحالية:</p>
+                    <input type="password" id="settings-verify-pwd-input" placeholder="••••••••" class="input-field w-full p-3 rounded-xl text-center tracking-widest">
+                </div>
+
+                <!-- Verify pattern input -->
+                <div id="settings-verify-pattern-container" class="hidden">
+                    <p class="text-xs text-gray-400 mb-2 font-semibold">2. ارسم النمط الحالي:</p>
+                    <div class="relative p-2 bg-black bg-opacity-30 rounded-2xl border border-gray-700 max-w-[200px] mx-auto">
+                        <canvas id="settings-verify-pattern-canvas" width="180" height="180" class="block cursor-pointer mx-auto"></canvas>
+                        <button id="clear-settings-verify-pattern" type="button" class="absolute bottom-1 left-1 text-[9px] bg-gray-700 hover:bg-gray-600 text-white px-2 py-0.5 rounded transition-all">إعادة الرسم</button>
+                    </div>
+                </div>
+
+                <button id="btn-settings-verify" type="button" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl mt-4 transition-colors">
+                    التحقق والمتابعة
+                </button>
+                <p id="settings-verify-error" class="text-red-400 text-xs text-center h-4 mt-2"></p>
+            </div>
+
+            <!-- Step 2: Set New Key -->
+            <div id="settings-new-step" class="hidden space-y-4">
+                <p class="text-xs text-green-400 border-r-2 border-r-green-500 pr-2">تم التحقق بنجاح! الآن اختر معايير الحماية الجديدة التي تريد تطبيقها لتشفر بيانات حساباتك بها.</p>
+                
+                <div class="flex bg-gray-800 bg-opacity-60 p-1 rounded-xl mb-4 border border-gray-700 shadow-inner">
+                    <button id="settings-new-tab-pwd" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all">بكلمة مرور جديدة</button>
+                    <button id="settings-new-tab-pattern" type="button" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all">بنمط رسم جديد</button>
+                </div>
+
+                <!-- New Elements Grid -->
+                <div title="اختر رمز الحماية الجديد الخاص بك">
+                    <p class="text-xs text-gray-400 mb-2 font-semibold">1. اختر عنصر الحماية الجديد:</p>
+                    <div class="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto p-1.5 border border-gray-700 rounded-lg bg-black bg-opacity-20 hide-scrollbar" id="settings-new-elements">
+                        <!-- Filled by JS dynamically -->
+                    </div>
+                </div>
+
+                <!-- New Password container -->
+                <div id="settings-new-pwd-container">
+                    <p class="text-xs text-gray-400 mb-2 font-semibold">2. أدخل كلمة المرور الجديدة:</p>
+                    <div class="relative">
+                        <input type="password" id="settings-new-pwd-input" placeholder="••••••••" class="input-field w-full p-3 pl-10 rounded-xl text-center tracking-widest">
+                        <button id="toggle-settings-new-pwd" type="button" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1" title="إظهار/إخفاء كلمة المرور">
+                            <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                    <!-- Strength meter for new password -->
+                    <div class="mt-1">
+                        <div class="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                            <div id="settings-new-pwd-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <p id="settings-new-pwd-strength-text" class="text-[10px] text-gray-400 mt-1 h-3"></p>
+                    </div>
+                </div>
+
+                <!-- New Pattern container -->
+                <div id="settings-new-pattern-container" class="hidden">
+                    <p class="text-xs text-gray-400 mb-2 font-semibold">2. ارسم النمط الجديد:</p>
+                    <div class="relative p-2 bg-black bg-opacity-30 rounded-2xl border border-gray-700 max-w-[200px] mx-auto">
+                        <canvas id="settings-new-pattern-canvas" width="180" height="180" class="block cursor-pointer mx-auto"></canvas>
+                        <button id="clear-settings-new-pattern" type="button" class="absolute bottom-1 left-1 text-[9px] bg-gray-700 hover:bg-gray-600 text-white px-2 py-0.5 rounded transition-all">إعادة الرسم</button>
+                    </div>
+                </div>
+
+                <button id="btn-settings-save" type="button" class="w-full bg-accent hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl mt-4 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                    حفظ وتحديث التشفير
+                </button>
+                <p id="settings-new-error" class="text-red-400 text-xs text-center h-4 mt-2"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Entry Modal -->
     <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 overflow-y-auto">
         <div class="glass-card p-6 rounded-2xl w-full max-w-md border border-gray-600 shadow-2xl transform transition-all slide-up my-8">
@@ -372,42 +602,73 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-1">
-                        <label class="block text-sm text-gray-400 mb-1">اسم الموقع</label>
-                        <input type="text" id="website-input" placeholder="مثال: Google" class="input-field w-full p-3 rounded-xl text-right">
+                        <label class="block text-sm text-gray-400 mb-1" title="اكتب اسماً واضحاً للموقع أو التطبيق، مثل: Google أو Facebook">اسم الموقع</label>
+                        <input type="text" id="website-input" placeholder="مثال: Google" class="input-field w-full p-3 rounded-xl">
                     </div>
                     <div class="col-span-1">
-                        <label class="block text-sm text-gray-400 mb-1">التصنيف</label>
+                        <label class="block text-sm text-gray-400 mb-1" title="اختر التصنيف المناسب لتسهيل تنظيم الحساب والوصول إليه لاحقاً">التصنيف</label>
                         <select id="category-input" class="input-field w-full p-3 rounded-xl cursor-pointer">
                             <!-- Populated by JS -->
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">البريد الإلكتروني / رقم الهاتف</label>
+                    <label class="block text-sm text-gray-400 mb-1" title="البريد الإلكتروني، اسم المستخدم، أو رقم الهاتف المستخدم لتسجيل الدخول">البريد الإلكتروني / رقم الهاتف</label>
                     <input type="text" id="username-input" placeholder="user@example.com / 01xxxxxxxx" class="input-field w-full p-3 rounded-xl text-left" dir="ltr">
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">كلمة المرور</label>
+                    <label class="block text-sm text-gray-400 mb-1" title="كلمة مرور هذا الحساب">كلمة المرور</label>
                     <div class="relative">
                         <input type="password" id="password-input" placeholder="••••••••" class="input-field w-full p-3 pl-24 rounded-xl text-left" dir="ltr">
-                        <button id="generate-password" class="absolute left-2 top-1/2 -translate-y-1/2 text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                        <button id="generate-password" type="button" class="absolute left-2 top-1/2 -translate-y-1/2 text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1" title="توليد كلمة مرور عشوائية قوية وفريدة بالتحكم في الطول ونوع الرموز">
                             <i class="ph-bold ph-magic-wand"></i> توليد
                         </button>
-                        <button id="toggle-add-pwd" class="absolute left-20 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1">
+                        <button id="toggle-add-pwd" type="button" class="absolute left-20 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1" title="إظهار أو إخفاء كلمة المرور المدخلة">
                             <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                    <!-- Add Password Strength meter -->
+                    <div class="mt-1">
+                        <div class="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                            <div id="add-pwd-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <p id="add-pwd-strength-text" class="text-[11px] text-gray-400 mt-1 h-4"></p>
+                    </div>
+                    <!-- Password Generator Drawer inside Add Modal -->
+                    <div id="add-generator-section" class="hidden p-4 rounded-xl bg-black bg-opacity-30 border border-gray-700 space-y-3 mt-2">
+                        <div class="flex justify-between items-center text-xs text-gray-300">
+                            <span>طول كلمة المرور: <strong id="gen-length-val">16</strong></span>
+                            <input type="range" id="gen-length" min="8" max="32" value="16" class="w-1/2 accent-primary">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="gen-upper" checked class="rounded accent-primary"> أحرف كبيرة (A-Z)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="gen-lower" checked class="rounded accent-primary"> أحرف صغيرة (a-z)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="gen-nums" checked class="rounded accent-primary"> أرقام (0-9)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="gen-syms" checked class="rounded accent-primary"> رموز (!@#$)
+                            </label>
+                        </div>
+                        <button id="btn-gen-apply" type="button" class="w-full bg-primary hover:bg-primaryDark text-white py-2 rounded-lg text-xs font-bold transition-all" title="توليد الكلمة وتعبئتها في الحقل المخصص">
+                            توليد وتطبيق
                         </button>
                     </div>
                 </div>
                 
                 <!-- Color Picker Section -->
-                <div>
-                    <label class="block text-sm text-gray-400 mb-2 mt-2">لون الكارت (للتمييز)</label>
+                <div title="اختر لوناً مميزاً لبطاقة هذا الحساب للتمييز البصري السريع">
+                    <label class="block text-sm text-gray-400 mb-2 mt-2">لون الكارت (للتمييز البصري)</label>
                     <div id="add-color-picker" class="flex flex-wrap gap-2">
                         <!-- Populated by JS -->
                     </div>
                 </div>
                 
-                <button id="add-entry" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl mt-4 transition-colors">
+                <button id="add-entry" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl mt-4 transition-colors" title="حفظ البيانات مشفرة أمنياً بـ AES-GCM">
                     حفظ وتشفير
                 </button>
             </div>
@@ -424,27 +685,66 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="col-span-1">
-                        <label class="block text-xs text-gray-400 mb-1">اسم الموقع</label>
-                        <input type="text" id="edit-website-input" class="input-field w-full p-3 rounded-xl text-right">
+                        <label class="block text-xs text-gray-400 mb-1" title="تعديل اسم الموقع">اسم الموقع</label>
+                        <input type="text" id="edit-website-input" class="input-field w-full p-3 rounded-xl">
                     </div>
                     <div class="col-span-1">
-                        <label class="block text-xs text-gray-400 mb-1">تغيير التصنيف</label>
+                        <label class="block text-xs text-gray-400 mb-1" title="تغيير تصنيف هذا الحساب">تغيير التصنيف</label>
                         <select id="edit-category-input" class="input-field w-full p-3 rounded-xl cursor-pointer">
                             <!-- Populated by JS -->
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">البريد الإلكتروني / رقم الهاتف</label>
+                    <label class="block text-xs text-gray-400 mb-1" title="تعديل اسم المستخدم أو الحساب">البريد الإلكتروني / رقم الهاتف</label>
                     <input type="text" id="edit-username-input" class="input-field w-full p-3 rounded-xl text-left" dir="ltr">
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">كلمة المرور</label>
-                    <input type="text" id="edit-password-input" class="input-field w-full p-3 rounded-xl text-left" dir="ltr">
+                    <label class="block text-xs text-gray-400 mb-1" title="تغيير كلمة مرور هذا الحساب">كلمة المرور</label>
+                    <div class="relative">
+                        <input type="password" id="edit-password-input" placeholder="••••••••" class="input-field w-full p-3 pl-24 rounded-xl text-left" dir="ltr">
+                        <button id="edit-generate-password" type="button" class="absolute left-2 top-1/2 -translate-y-1/2 text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1" title="توليد كلمة مرور عشوائية قوية وفريدة">
+                            <i class="ph-bold ph-magic-wand"></i> توليد
+                        </button>
+                        <button id="toggle-edit-pwd" type="button" class="absolute left-20 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1" title="إظهار أو إخفاء كلمة المرور">
+                            <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                    <!-- Edit Password Strength meter -->
+                    <div class="mt-1">
+                        <div class="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                            <div id="edit-pwd-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <p id="edit-pwd-strength-text" class="text-[11px] text-gray-400 mt-1 h-4"></p>
+                    </div>
+                    <!-- Password Generator Drawer inside Edit Modal -->
+                    <div id="edit-generator-section" class="hidden p-4 rounded-xl bg-black bg-opacity-30 border border-gray-700 space-y-3 mt-2">
+                        <div class="flex justify-between items-center text-xs text-gray-300">
+                            <span>طول كلمة المرور: <strong id="edit-gen-length-val">16</strong></span>
+                            <input type="range" id="edit-gen-length" min="8" max="32" value="16" class="w-1/2 accent-primary">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="edit-gen-upper" checked class="rounded accent-primary"> أحرف كبيرة (A-Z)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="edit-gen-lower" checked class="rounded accent-primary"> أحرف صغيرة (a-z)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="edit-gen-nums" checked class="rounded accent-primary"> أرقام (0-9)
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+                                <input type="checkbox" id="edit-gen-syms" checked class="rounded accent-primary"> رموز (!@#$)
+                            </label>
+                        </div>
+                        <button id="btn-edit-gen-apply" type="button" class="w-full bg-primary hover:bg-primaryDark text-white py-2 rounded-lg text-xs font-bold transition-all" title="توليد وتطبيق الكلمة الجديدة">
+                            توليد وتطبيق
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Color Picker Section -->
-                <div>
+                <div title="تغيير لون تمييز كارت هذا الحساب">
                     <label class="block text-sm text-gray-400 mb-2 mt-2">تغيير لون الكارت</label>
                     <div id="edit-color-picker" class="flex flex-wrap gap-2">
                         <!-- Populated by JS -->
@@ -452,7 +752,7 @@
                 </div>
             </div>
             <div class="mt-6">
-                <button id="edit-save-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors">
+                <button id="edit-save-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors" title="حفظ التعديلات المدخلة وتحديث التشفير">
                     حفظ التعديلات
                 </button>
             </div>
@@ -473,14 +773,25 @@
             <div class="space-y-4">
                 <div class="bg-black bg-opacity-20 p-3 rounded-xl border border-white border-opacity-5 relative group">
                     <p class="text-xs text-gray-400 mb-1">البريد / الحساب</p>
-                    <p class="font-mono text-white text-left break-all select-all" dir="ltr" id="modal-username"></p>
-                    <button class="absolute top-1/2 -translate-y-1/2 left-3 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity" onclick="copyText('modal-username', 'تم نسخ البريد/الحساب')"><i class="ph-bold ph-copy text-xl"></i></button>
+                    <p class="font-mono text-white text-left break-all select-all text-sm" dir="ltr" id="modal-username"></p>
+                    <button class="absolute top-1/2 -translate-y-1/2 left-3 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity" onclick="copyText('modal-username', 'تم نسخ البريد/الحساب')" title="نسخ البريد الإلكتروني أو رقم الهاتف للحافظة"><i class="ph-bold ph-copy text-xl"></i></button>
                 </div>
                 
                 <div class="bg-black bg-opacity-20 p-3 rounded-xl border border-white border-opacity-5 relative group">
                     <p class="text-xs text-gray-400 mb-1">كلمة المرور</p>
-                    <p class="font-mono text-accent font-bold text-left break-all select-all text-lg" dir="ltr" id="modal-password-text"></p>
-                    <button class="absolute top-1/2 -translate-y-1/2 left-3 text-gray-400 hover:text-white" onclick="copyText('modal-password-text', 'تم نسخ كلمة المرور')"><i class="ph-bold ph-copy text-xl"></i></button>
+                    <div class="flex items-center justify-between">
+                        <p class="font-mono text-accent font-bold text-left break-all select-all text-lg mr-2" dir="ltr" id="modal-password-text">••••••••</p>
+                        <div class="flex gap-2">
+                            <button id="modal-toggle-pwd" type="button" class="text-gray-400 hover:text-white p-1" title="إظهار/إخفاء كلمة المرور">
+                                <i class="ph-bold ph-eye text-xl"></i>
+                            </button>
+                            <button type="button" class="text-gray-400 hover:text-white p-1" onclick="copyText('modal-password-text-hidden', 'تم نسخ كلمة المرور')" title="نسخ كلمة المرور للحافظة">
+                                <i class="ph-bold ph-copy text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Hidden element to store raw password for copyText -->
+                    <span id="modal-password-text-hidden" class="hidden"></span>
                 </div>
             </div>
             
@@ -503,12 +814,100 @@
         </div>
     </div>
 
+    <!-- Recovery Modal -->
+    <div id="recovery-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-md border border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="ph-bold ph-keyhole text-primary"></i> استعادة الخزنة الطارئة</h3>
+                <button id="btn-recovery-cancel" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            <p class="text-xs text-gray-400 mb-4 leading-relaxed text-right">أدخل مفتاح الاستعادة الخاص بك المكون من 20 حرفاً ورقم. هذا المفتاح قمت بنسخه أو إرساله لبريدك عند إنشاء الخزنة.</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1 text-right">مفتاح الاستعادة</label>
+                    <input type="text" id="recovery-key-input" placeholder="BAS-XXXX-XXXX-XXXX-XXXX" class="input-field w-full p-3 rounded-xl text-center font-mono tracking-widest text-emerald-400">
+                </div>
+                <button id="btn-recovery-submit" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                    استعادة ودخول الخزنة
+                </button>
+                <p id="recovery-error" class="text-red-400 text-xs text-center h-4 mt-2"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recovery Key Display Modal -->
+    <div id="recovery-key-display-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-[60] p-4">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-md border border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)] text-center">
+            <div class="w-16 h-16 bg-emerald-950 bg-opacity-40 border border-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400 shadow-lg">
+                <i class="ph-fill ph-shield-check text-4xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2" id="recovery-display-title">مفتاح الاستعادة الطارئ</h3>
+            <p class="text-xs text-gray-400 mb-4 leading-relaxed" id="recovery-display-desc">هذا المفتاح هو وسيلتك الوحيدة لاسترجاع بياناتك إذا نسيت كلمة المرور الرئيسية. لن نتمكن من مساعدتك في استعادتها إذا فقدته!</p>
+            
+            <div class="bg-black bg-opacity-35 border border-emerald-500 border-opacity-30 rounded-xl p-4 mb-4 select-all font-mono text-emerald-400 text-lg tracking-wider font-bold shadow-inner" id="recovery-key-text">
+                BAS-XXXX-XXXX-XXXX-XXXX
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <button id="btn-copy-recovery-key" class="bg-gray-800 hover:bg-gray-700 text-gray-200 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-gray-700" title="نسخ مفتاح الاستعادة للحافظة">
+                    <i class="ph-bold ph-copy"></i> نسخ المفتاح
+                </button>
+                <button id="btn-download-recovery-key" class="bg-gray-800 hover:bg-gray-700 text-gray-200 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-gray-700" title="تحميل مفتاح الاستعادة كملف نصي للحفظ الأمن">
+                    <i class="ph-bold ph-download-simple"></i> تحميل كملف 💾
+                </button>
+                <button id="btn-email-recovery-key" class="col-span-2 bg-emerald-900 bg-opacity-40 hover:bg-opacity-100 border border-emerald-500 text-emerald-300 hover:text-white py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all" title="فتح برنامج البريد وتجهيز رسالة بمفتاح الاستعادة لإرسالها لنفسك">
+                    <i class="ph-bold ph-envelope-simple"></i> إرسال إلى بريدي الإلكتروني 📧
+                </button>
+            </div>
+            
+            <div class="flex items-start gap-2 text-right mb-6 bg-red-950 bg-opacity-20 border border-red-900 border-opacity-35 p-3 rounded-xl">
+                <input type="checkbox" id="recovery-confirm-checkbox" class="mt-1 accent-emerald-500 rounded cursor-pointer">
+                <label for="recovery-confirm-checkbox" class="text-xs text-gray-300 select-none cursor-pointer leading-tight">أقر بأنني قمت بحفظ مفتاح الاستعادة هذا في مكان آمن، وأتفهم تماماً أنه بدون هذا المفتاح لن يمكنني استعادة بياناتي أبداً في حال نسيان كلمة المرور.</label>
+            </div>
+            
+            <button id="btn-recovery-continue" disabled class="w-full bg-primary disabled:bg-gray-700 disabled:text-gray-400 disabled:border-transparent hover:bg-primaryDark text-white font-bold py-3 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                حفظت المفتاح، متابعة للدخول
+            </button>
+        </div>
+    </div>
+
+    <!-- PDF Export Modal -->
+    <div id="pdf-export-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card p-6 rounded-2xl w-full max-w-sm border border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="ph-bold ph-file-pdf text-red-400"></i> تصدير البيانات إلى PDF</h3>
+                <button id="btn-pdf-export-cancel" class="text-gray-400 hover:text-white"><i class="ph-bold ph-x text-xl"></i></button>
+            </div>
+            <p class="text-xs text-gray-400 mb-4 leading-relaxed text-right">سيتم إنشاء تقرير منظم يحتوي على حساباتك. لزيادة الأمان، ننصح بشدة بوضع كلمة مرور لحماية ملف الـ PDF ومنع المتطفلين من فتحه.</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1 text-right">تعيين كلمة مرور لحماية ملف الـ PDF (اختياري)</label>
+                    <div class="relative">
+                        <input type="password" id="pdf-password-input" placeholder="اكتب كلمة مرور قوية" class="input-field w-full p-3 pr-4 pl-10 rounded-xl text-center tracking-widest text-sm">
+                        <button id="toggle-pdf-pwd" type="button" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white p-1" title="إظهار/إخفاء كلمة المرور">
+                            <i class="ph-bold ph-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2 bg-black bg-opacity-25 p-3 rounded-xl border border-white border-opacity-5">
+                    <input type="checkbox" id="pdf-include-passwords" checked class="accent-emerald-500 rounded cursor-pointer w-4 h-4">
+                    <label for="pdf-include-passwords" class="text-xs text-gray-300 select-none cursor-pointer leading-tight text-right w-full">تضمين كلمات المرور داخل ملف الـ PDF المصدر</label>
+                </div>
+                
+                <button id="btn-pdf-export-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg">
+                    تصدير وتشفير ملف الـ PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase & App Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 
         // --- DOM Elements ---
         const $ = id => document.getElementById(id);
@@ -541,6 +940,8 @@
         // --- Categories & Colors Config ---
         let customCategories = ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
         let currentCategory = 'الكل';
+        let currentAuditFilter = 'all'; // 'all', 'weak', 'reused'
+        
         const CARD_COLORS = [
             { id: 'default', bg: 'rgba(30, 41, 59, 0.7)' },
             { id: 'red', bg: 'rgba(153, 27, 27, 0.5)' },
@@ -563,6 +964,276 @@
         const ALGORITHM = 'AES-GCM';
         const KEY_LENGTH = 256;
 
+        let clipboardTimeout = null;
+        let modalPwdShown = false;
+
+        // --- Master Credentials Modes ---
+        let lockMode = 'pwd'; // 'pwd' or 'pattern'
+        let verifyMode = 'pwd'; // 'pwd' or 'pattern'
+        let newMode = 'pwd'; // 'pwd' or 'pattern'
+        
+        let currentLockPattern = "";
+        let currentVerifyPattern = "";
+        let currentNewPattern = "";
+
+        // --- Pattern Canvas Instances ---
+        let lockPatternInstance = null;
+        let verifyPatternInstance = null;
+        let newPatternInstance = null;
+
+        // --- 25 Security Elements Emojis Configuration ---
+        const SECURITY_ELEMENTS = [
+            { id: 'fire', val: 'FIRE', emoji: '🔥', label: 'النار: رمز القوة والحرارة' },
+            { id: 'water', val: 'WATER', emoji: '🌊', label: 'الماء: رمز الانسيابية والسلام' },
+            { id: 'earth', val: 'EARTH', emoji: '🌿', label: 'الأرض: رمز الثبات والصلابة' },
+            { id: 'air', val: 'AIR', emoji: '💨', label: 'الهواء: رمز الحركة والتفكير' },
+            { id: 'lightning', val: 'LIGHTNING', emoji: '⚡', label: 'البرق: رمز السرعة والإضاءة' },
+            { id: 'ice', val: 'ICE', emoji: '❄️', label: 'الجليد: رمز الهدوء والبرود' },
+            { id: 'moon', val: 'MOON', emoji: '🌙', label: 'القمر: رمز الليل والسكينة' },
+            { id: 'sun', val: 'SUN', emoji: '☀️', label: 'الشمس: رمز النهار والوضوح' },
+            { id: 'star', val: 'STAR', emoji: '⭐', label: 'النجمة: رمز الأمل والاهتداء' },
+            { id: 'diamond', val: 'DIAMOND', emoji: '💎', label: 'الجوهرة: رمز الندرة والقيمة العالية' },
+            { id: 'saturn', val: 'SATURN', emoji: '🪐', label: 'زحل: رمز الكون والغموض والمسافات' },
+            { id: 'shield', val: 'SHIELD', emoji: '🛡️', label: 'الدرع: رمز الحماية والمقاومة' },
+            { id: 'key', val: 'KEY', emoji: '🔑', label: 'المفتاح: رمز الفتح والوصول والحلول' },
+            { id: 'clover', val: 'CLOVER', emoji: '🍀', label: 'البرسيم: رمز الحظ الجيد والطبيعة الخضراء' },
+            { id: 'dna', val: 'DNA', emoji: '🧬', label: 'الحمض النووي: رمز البنية الأساسية والتفرد البيولوجي' },
+            { id: 'crystal', val: 'CRYSTAL', emoji: '🔮', label: 'الكرة البلورية: رمز التوقع واستشراف المستقبل' },
+            { id: 'volcano', val: 'VOLCANO', emoji: '🌋', label: 'البركان: رمز الطاقة المتفجرة والغضب الطبيعي' },
+            { id: 'anchor', val: 'ANCHOR', emoji: '⚓', label: 'المخطاف: رمز الأمان والرسو والاستقرار' },
+            { id: 'lion', val: 'LION', emoji: '🦁', label: 'الأسد: رمز الشجاعة والهيبة والقيادة' },
+            { id: 'eagle', val: 'EAGLE', emoji: '🦅', label: 'النسر: رمز الحرية والارتفاع والرؤية الحادة' },
+            { id: 'palette', val: 'PALETTE', emoji: '🎨', label: 'الألوان: رمز الإبداع والفن والجمال' },
+            { id: 'brain', val: 'BRAIN', emoji: '🧠', label: 'العقل: رمز التفكير والذكاء والمعرفة' },
+            { id: 'ufo', val: 'UFO', emoji: '🛸', label: 'الطبق الطائر: رمز الخيال العلمي والمجهول' },
+            { id: 'dino', val: 'DINO', emoji: '🦖', label: 'الديناصور: رمز العصور القديمة والقوة البائدة' },
+            { id: 'masks', val: 'MASKS', emoji: '🎭', label: 'الأقنعة: رمز التمثيل والسرية والتخفي' }
+        ];
+
+        // --- Interactive Pattern Lock Canvas Class ---
+        class PatternLock {
+            constructor(canvasId, onComplete) {
+                this.canvas = document.getElementById(canvasId);
+                if (!this.canvas) return;
+                this.ctx = this.canvas.getContext('2d');
+                this.onComplete = onComplete;
+                this.dots = [];
+                this.path = [];
+                this.isDrawing = false;
+                
+                this.init();
+                this.setupEvents();
+            }
+            
+            init() {
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                const padding = 35;
+                const spacingX = (width - padding * 2) / 2;
+                const spacingY = (height - padding * 2) / 2;
+                
+                this.dots = [];
+                for (let r = 0; r < 3; r++) {
+                    for (let c = 0; c < 3; c++) {
+                        this.dots.push({
+                            id: r * 3 + c,
+                            x: padding + c * spacingX,
+                            y: padding + r * spacingY,
+                            radius: 12
+                        });
+                    }
+                }
+                this.draw();
+            }
+            
+            setupEvents() {
+                const getMousePos = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    return {
+                        x: (clientX - rect.left) * (this.canvas.width / rect.width),
+                        y: (clientY - rect.top) * (this.canvas.height / rect.height)
+                    };
+                };
+                
+                const handleStart = (e) => {
+                    e.preventDefault();
+                    this.isDrawing = true;
+                    this.path = [];
+                    const pos = getMousePos(e);
+                    this.checkCollision(pos);
+                    this.draw(pos);
+                };
+                
+                const handleMove = (e) => {
+                    if (!this.isDrawing) return;
+                    e.preventDefault();
+                    const pos = getMousePos(e);
+                    this.checkCollision(pos);
+                    this.draw(pos);
+                };
+                
+                const handleEnd = (e) => {
+                    if (!this.isDrawing) return;
+                    this.isDrawing = false;
+                    this.draw();
+                    if (this.path.length > 0 && this.onComplete) {
+                        this.onComplete(this.path.join('-'));
+                    }
+                };
+                
+                this.canvas.addEventListener('mousedown', handleStart);
+                this.canvas.addEventListener('mousemove', handleMove);
+                window.addEventListener('mouseup', handleEnd);
+                
+                this.canvas.addEventListener('touchstart', handleStart, {passive: false});
+                this.canvas.addEventListener('touchmove', handleMove, {passive: false});
+                window.addEventListener('touchend', handleEnd);
+            }
+            
+            checkCollision(pos) {
+                for (let dot of this.dots) {
+                    const dx = pos.x - dot.x;
+                    const dy = pos.y - dot.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < dot.radius * 2.2) { 
+                        if (!this.path.includes(dot.id)) {
+                            this.path.push(dot.id);
+                            if (navigator.vibrate) navigator.vibrate(20);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            draw(mousePos = null) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw connecting lines
+                if (this.path.length > 0) {
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = '#0ea5e9'; 
+                    this.ctx.lineWidth = 4;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+                    
+                    const startDot = this.dots[this.path[0]];
+                    this.ctx.moveTo(startDot.x, startDot.y);
+                    
+                    for (let i = 1; i < this.path.length; i++) {
+                        const dot = this.dots[this.path[i]];
+                        this.ctx.lineTo(dot.x, dot.y);
+                    }
+                    
+                    if (mousePos && this.isDrawing) {
+                        this.ctx.lineTo(mousePos.x, mousePos.y);
+                    }
+                    
+                    this.ctx.stroke();
+                }
+                
+                // Draw dots
+                for (let dot of this.dots) {
+                    const isSelected = this.path.includes(dot.id);
+                    
+                    if (isSelected) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(dot.x, dot.y, dot.radius * 1.8, 0, Math.PI * 2);
+                        this.ctx.fillStyle = 'rgba(14, 165, 233, 0.2)';
+                        this.ctx.fill();
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+                        this.ctx.fillStyle = '#0ea5e9';
+                        this.ctx.fill();
+                    } else {
+                        this.ctx.beginPath();
+                        this.ctx.arc(dot.x, dot.y, dot.radius * 0.7, 0, Math.PI * 2);
+                        this.ctx.fillStyle = '#475569'; 
+                        this.ctx.fill();
+                    }
+                }
+            }
+            
+            clear() {
+                this.path = [];
+                this.draw();
+            }
+        }
+
+        // --- Render Security Elements into grid ---
+        function renderSecurityElementsGrid(containerId, nameAttr, selectedValue = 'FIRE') {
+            const container = $(containerId);
+            container.innerHTML = '';
+            SECURITY_ELEMENTS.forEach(elem => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative';
+                
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = nameAttr;
+                input.id = `${containerId}_${elem.id}`;
+                input.value = elem.val;
+                input.className = 'hidden element-radio';
+                if (elem.val === selectedValue) input.checked = true;
+                
+                const label = document.createElement('label');
+                label.htmlFor = input.id;
+                label.className = 'flex flex-col items-center justify-center p-2 rounded-lg border border-gray-600 cursor-pointer transition-all hover:bg-gray-700';
+                label.title = elem.label;
+                
+                const span = document.createElement('span');
+                span.className = 'text-2xl';
+                span.textContent = elem.emoji;
+                
+                label.appendChild(span);
+                wrapper.appendChild(input);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
+            });
+        }
+
+        // --- Safe Base64 Conversions ---
+        function uint8ArrayToBase64(arr) {
+            let binary = '';
+            const len = arr.length;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(arr[i]);
+            }
+            return btoa(binary);
+        }
+
+        function base64ToUint8Array(base64) {
+            const binary = atob(base64);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        // --- Escape HTML for secure rendering ---
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // --- Highlight matching query ---
+        function highlightMatch(text, query) {
+            const escapedText = escapeHTML(text);
+            if (!query) return escapedText;
+            const escapedQuery = escapeHTML(query).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            return escapedText.replace(regex, `<mark class="bg-yellow-500 bg-opacity-40 text-white rounded px-0.5">$1</mark>`);
+        }
+
         // --- Auto-Lock Logic ---
         function resetInactivityTimer() {
             if (!masterKey) return; 
@@ -574,7 +1245,7 @@
             masterKey = null;
             entries = [];
             displayedEntries = [];
-            $('entries-grid').innerHTML = ''; 
+            wipeDOM();
             $('app-section').classList.add('hidden');
             $('master-password-section').classList.remove('hidden');
             $('master-password-input').value = '';
@@ -584,6 +1255,158 @@
         ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'].forEach(evt => {
             window.addEventListener(evt, resetInactivityTimer);
         });
+
+        // --- Active DOM and Memory Wiping ---
+        function wipeDOM() {
+            $('entries-grid').innerHTML = '';
+            $('categories-list').innerHTML = '';
+            $('category-tabs').innerHTML = '';
+            
+            // Wipe inputs
+            const inputsToWipe = [
+                'auth-email', 'auth-password', 'master-password-input',
+                'new-category-input', 'website-input', 'username-input',
+                'password-input', 'edit-website-input', 'edit-username-input',
+                'edit-password-input', 'settings-verify-pwd-input', 'settings-new-pwd-input'
+            ];
+            inputsToWipe.forEach(id => {
+                const el = $(id);
+                if (el) el.value = '';
+            });
+            
+            // Wipe displays
+            const displaysToWipe = [
+                'modal-website', 'modal-username', 'modal-password-text',
+                'modal-password-text-hidden', 'user-email-display',
+                'master-pwd-strength-text', 'add-pwd-strength-text', 'edit-pwd-strength-text',
+                'settings-new-pwd-strength-text', 'settings-verify-error', 'settings-new-error'
+            ];
+            displaysToWipe.forEach(id => {
+                const el = $(id);
+                if (el) el.textContent = '';
+            });
+
+            // Reset strength bars
+            const barsToReset = ['master-pwd-strength-bar', 'add-pwd-strength-bar', 'edit-pwd-strength-bar', 'settings-new-pwd-strength-bar'];
+            barsToReset.forEach(id => {
+                const el = $(id);
+                if (el) {
+                    el.className = 'h-full transition-all duration-300 bg-gray-700';
+                    el.style.width = '0%';
+                }
+            });
+            
+            $('master-password-error').textContent = '';
+            $('auth-error').textContent = '';
+
+            // Hide drawers
+            $('add-generator-section').classList.add('hidden');
+            $('edit-generator-section').classList.add('hidden');
+
+            // Clear pattern canvases
+            currentLockPattern = "";
+            currentVerifyPattern = "";
+            currentNewPattern = "";
+            if (lockPatternInstance) lockPatternInstance.clear();
+            if (verifyPatternInstance) verifyPatternInstance.clear();
+            if (newPatternInstance) newPatternInstance.clear();
+        }
+
+        // --- Password Strength Evaluator ---
+        function evaluatePasswordStrength(pwd) {
+            if (!pwd) return { score: 0, text: 'فارغة', color: 'text-gray-500', bg: 'bg-gray-700' };
+            let score = 0;
+            if (pwd.length >= 8) score++;
+            if (pwd.length >= 12) score++;
+            if (/[A-Z]/.test(pwd)) score++;
+            if (/[a-z]/.test(pwd) && /[0-9]/.test(pwd)) score++;
+            if (/[^A-Za-z0-9]/.test(pwd)) score++;
+            
+            // Normalize score to 1-4
+            score = Math.min(Math.max(Math.floor(score * 0.8), 1), 4);
+            if (pwd.length < 6) score = 1; // Force weak if very short
+            
+            const strengths = [
+                { score: 0, text: 'فارغة', color: 'text-gray-400', bg: 'bg-gray-600' },
+                { score: 1, text: 'ضعيفة جداً 🔴', color: 'text-red-400', bg: 'bg-red-500' },
+                { score: 2, text: 'ضعيفة 🟠', color: 'text-orange-400', bg: 'bg-orange-500' },
+                { score: 3, text: 'متوسطة 🟡', color: 'text-yellow-400', bg: 'bg-yellow-500' },
+                { score: 4, text: 'قوية جداً 🟢', color: 'text-emerald-400', bg: 'bg-emerald-500' }
+            ];
+            return strengths[score];
+        }
+
+        // --- Smart Security Auditor ---
+        function runSecurityAudit() {
+            let total = entries.length;
+            if (total === 0) {
+                return { total: 0, weak: 0, reused: 0, health: 100 };
+            }
+            
+            let weakCount = 0;
+            let pwdCounts = {};
+            
+            entries.forEach(e => {
+                const p = e.password || '';
+                if (p.length < 8) {
+                    weakCount++;
+                }
+                pwdCounts[p] = (pwdCounts[p] || 0) + 1;
+            });
+            
+            let reusedCount = 0;
+            entries.forEach(e => {
+                const p = e.password || '';
+                if (pwdCounts[p] > 1) {
+                    reusedCount++;
+                }
+            });
+            
+            // Health Score calculation
+            let score = 100;
+            score -= (weakCount * 15);
+            score -= (reusedCount * 10);
+            let health = Math.max(0, Math.min(100, score));
+            
+            return { total, weak: weakCount, reused: reusedCount, health };
+        }
+
+        function updateSecurityAuditUI() {
+            const stats = runSecurityAudit();
+            $('audit-total-val').textContent = stats.total;
+            $('audit-health-val').textContent = stats.health + '%';
+            $('audit-weak-val').textContent = stats.weak;
+            $('audit-reused-val').textContent = stats.reused;
+            
+            const healthVal = $('audit-health-val');
+            if (stats.health >= 80) {
+                healthVal.className = 'text-3xl font-extrabold text-emerald-400 mt-1';
+            } else if (stats.health >= 50) {
+                healthVal.className = 'text-3xl font-extrabold text-yellow-400 mt-1';
+            } else {
+                healthVal.className = 'text-3xl font-extrabold text-red-400 mt-1';
+            }
+        }
+
+        function updateAuditActiveCard() {
+            const totalC = $('audit-total-card');
+            const healthC = $('audit-health-card');
+            const weakC = $('audit-weak-card');
+            const reusedC = $('audit-reused-card');
+            
+            totalC.className = "text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer";
+            healthC.className = "text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer border-r-4 border-r-emerald-500";
+            weakC.className = "text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer border-r-4 border-r-red-500";
+            reusedC.className = "text-center p-3 rounded-xl bg-black bg-opacity-20 border border-white border-opacity-5 hover:bg-opacity-30 transition-all cursor-pointer border-r-4 border-r-orange-500";
+            
+            if (currentAuditFilter === 'all') {
+                totalC.classList.add('ring-2', 'ring-primary');
+            } else if (currentAuditFilter === 'weak') {
+                weakC.classList.add('ring-2', 'ring-red-500');
+            } else if (currentAuditFilter === 'reused') {
+                reusedC.classList.add('ring-2', 'ring-orange-500');
+            }
+        }
 
         // --- PWA Setup ---
         let deferredPrompt;
@@ -639,7 +1462,7 @@
             toast.className = 'toast';
             
             const iconWrapper = document.createElement('div');
-            iconWrapper.innerHTML = type === 'success' ? '<i class="ph-fill ph-check-circle text-accent text-xl"></i>' : '<i class="ph-fill ph-warning-circle text-red-500 text-xl"></i>';
+            iconWrapper.innerHTML = type === 'success' ? '<i class="ph-fill ph-check-circle text-accent text-xl"></i>' : (type === 'warning' ? '<i class="ph-fill ph-warning-circle text-orange-400 text-xl"></i>' : '<i class="ph-fill ph-warning-circle text-red-500 text-xl"></i>');
             
             const textSpan = document.createElement('span');
             textSpan.className = 'text-white text-sm';
@@ -672,12 +1495,33 @@
         };
         
         function performCopy(text, successMsg) {
-            navigator.clipboard.writeText(text).then(() => { showToast(successMsg, 'success'); }).catch(err => {
+            navigator.clipboard.writeText(text).then(() => { 
+                showToast(successMsg, 'success'); 
+                
+                // Security: Clear clipboard after 30 seconds
+                clearTimeout(clipboardTimeout);
+                clipboardTimeout = setTimeout(() => {
+                    navigator.clipboard.writeText("").then(() => {
+                        showToast("تم تنظيف الحافظة تلقائياً لحمايتك", "warning");
+                    }).catch(() => {});
+                }, 30000);
+            }).catch(err => {
+                // Fallback copy
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
+                textarea.style.position = 'fixed';
                 document.body.appendChild(textarea);
                 textarea.select();
-                try { document.execCommand('copy'); showToast(successMsg, 'success'); } 
+                try { 
+                    document.execCommand('copy'); 
+                    showToast(successMsg, 'success'); 
+                    clearTimeout(clipboardTimeout);
+                    clipboardTimeout = setTimeout(() => {
+                        navigator.clipboard.writeText("").then(() => {
+                            showToast("تم تنظيف الحافظة تلقائياً لحمايتك", "warning");
+                        }).catch(() => {});
+                    }, 30000);
+                } 
                 catch (e) { showToast('فشل النسخ', 'error'); }
                 document.body.removeChild(textarea);
             });
@@ -706,7 +1550,6 @@
         }
 
         // --- Core Crypto Functions ---
-        // 🛡️ التعديل: تمرير عدد التكرارات كمعامل لكي نتمكن من فك التشفير القديم (100,000) والجديد (600,000)
         async function deriveKey(passwordStr, saltStr, targetIterations = ITERATIONS) {
             const encoder = new TextEncoder();
             const keyMaterial = await window.crypto.subtle.importKey('raw', encoder.encode(passwordStr), { name: 'PBKDF2' }, false, ['deriveKey']);
@@ -720,17 +1563,56 @@
             const encryptedBytes = new Uint8Array(encryptedContent);
             const result = new Uint8Array(iv.length + encryptedBytes.length);
             result.set(iv); result.set(encryptedBytes, iv.length);
-            return btoa(String.fromCharCode.apply(null, result));
+            return uint8ArrayToBase64(result);
         }
         
         async function decryptData(encryptedData, key) {
             try {
-                const dataBytes = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
+                const dataBytes = base64ToUint8Array(encryptedData);
                 const iv = dataBytes.slice(0, 12);
                 const encryptedContent = dataBytes.slice(12);
                 const decryptedContent = await window.crypto.subtle.decrypt({ name: ALGORITHM, iv: iv }, key, encryptedContent);
                 return new TextDecoder().decode(decryptedContent);
             } catch (e) { return null; }
+        }
+
+        async function encryptDataRaw(dataUint8Array, key) {
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const encryptedContent = await window.crypto.subtle.encrypt({ name: ALGORITHM, iv: iv }, key, dataUint8Array);
+            const encryptedBytes = new Uint8Array(encryptedContent);
+            const result = new Uint8Array(iv.length + encryptedBytes.length);
+            result.set(iv); result.set(encryptedBytes, iv.length);
+            return uint8ArrayToBase64(result);
+        }
+
+        async function decryptDataRaw(encryptedData, key) {
+            try {
+                const dataBytes = base64ToUint8Array(encryptedData);
+                const iv = dataBytes.slice(0, 12);
+                const encryptedContent = dataBytes.slice(12);
+                const decryptedContent = await window.crypto.subtle.decrypt({ name: ALGORITHM, iv: iv }, key, encryptedContent);
+                return new Uint8Array(decryptedContent);
+            } catch (e) { return null; }
+        }
+
+        async function generateVaultKey() {
+            return window.crypto.subtle.generateKey(
+                { name: ALGORITHM, length: KEY_LENGTH },
+                true,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        function generateRecoveryKeyString() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let key = "BAS-";
+            const array = new Uint32Array(20);
+            window.crypto.getRandomValues(array);
+            for (let i = 0; i < 20; i++) {
+                if (i > 0 && i % 4 === 0) key += "-";
+                key += chars[array[i] % chars.length];
+            }
+            return key;
         }
 
         // --- Firebase Integration ---
@@ -747,27 +1629,15 @@
 
                 const app = initializeApp(firebaseConfig);
 
-                const recaptchaKey = '6LfL8LcsAAAAAITPTkl-pWekq7HLx_HYB6Jj8qVV';
-                
-                try {
-                    const appCheck = initializeAppCheck(app, {
-                        provider: new ReCaptchaV3Provider(recaptchaKey), 
-                        isTokenAutoRefreshEnabled: true
-                    });
-                    
-                    // دالة تشخيص للتأكد من جلب التوكن بنجاح
-                    getToken(appCheck, false).then(() => {
-                        console.log("✅ App Check is working and token obtained!");
-                    }).catch((err) => {
-                        console.error("❌ App Check Error: ", err);
-                        if (err.message && err.message.includes('403')) {
-                            console.error("💡 خطأ 403: السيرفر يرفض التوكن! الأسباب:\n1. الـ Secret Key في إعدادات App Check بـ Firebase غير صحيح (تأكد من نسخه من موقع reCAPTCHA بشكل صحيح).\n2. مفتاح الـ API مقيد في Google Cloud ولا يسمح بـ Firebase App Check API.\n3. لم يتم تفعيل App Check API في المشروع أصلاً.");
-                        } else if (err.message && err.message.includes('recaptcha-error')) {
-                            console.error("💡 السبب المحتمل: الدومين غير مسجل في reCAPTCHA (أضف localhost و 127.0.0.1 إذا كنت تجرب محلياً) أو أن مانع الإعلانات (AdBlocker) يمنع السكربت.");
-                        }
-                    });
-
-                } catch(e) { console.warn('App check init failed', e); }
+                const recaptchaKey = 'YOUR_RECAPTCHA_SITE_KEY_HERE';
+                if (recaptchaKey !== 'YOUR_RECAPTCHA_SITE_KEY_HERE') {
+                    try {
+                        initializeAppCheck(app, {
+                            provider: new ReCaptchaV3Provider(recaptchaKey), 
+                            isTokenAutoRefreshEnabled: true
+                        });
+                    } catch(e) { console.warn('App check init missing key, proceeding in dev mode'); }
+                }
 
                 db = getFirestore(app);
                 auth = getAuth(app);
@@ -785,6 +1655,22 @@
                         masterPasswordSection.classList.remove('hidden');
                         $('user-email-display').textContent = user.email;
                         
+                        // Render 25 elements for grids dynamically
+                        renderSecurityElementsGrid('security-elements', 'sec_element', 'FIRE');
+                        renderSecurityElementsGrid('settings-verify-elements', 'settings-verify-sec_element', 'FIRE');
+                        renderSecurityElementsGrid('settings-new-elements', 'settings-new-sec_element', 'FIRE');
+
+                        // Initialize Pattern Locks
+                        lockPatternInstance = new PatternLock('lock-pattern-canvas', (pattern) => {
+                            currentLockPattern = pattern;
+                        });
+                        verifyPatternInstance = new PatternLock('settings-verify-pattern-canvas', (pattern) => {
+                            currentVerifyPattern = pattern;
+                        });
+                        newPatternInstance = new PatternLock('settings-new-pattern-canvas', (pattern) => {
+                            currentNewPattern = pattern;
+                        });
+
                         vaultDocRef = doc(db, 'password-vaults', user.uid);
                         checkInitialState();
                     } else {
@@ -802,7 +1688,7 @@
             if (unsubscribe) unsubscribe();
             masterKey = null; userSalt = null; entries = []; vaultDocRef = null;
             clearTimeout(inactivityTimeout); 
-            $('auth-error').textContent = ''; $('master-password-error').textContent = ''; $('master-password-input').value = ''; $('auth-email').value = ''; $('auth-password').value = '';
+            wipeDOM();
             appSection.classList.add('hidden'); masterPasswordSection.classList.add('hidden');
         }
 
@@ -813,7 +1699,7 @@
                 if (docSnap.exists() && docSnap.data().encrypted) {
                     promptElement.textContent = 'تم العثور على خزنتك المشفرة. أدخل الرمز المرئي و كلمة المرور لفتحها.';
                 } else {
-                    promptElement.textContent = 'مرحباً بك في خزنتك الجديدة! اختر رمزاً مرئياً واكتب كلمة مرور قوية لتشفير بياناتك.';
+                    promptElement.textContent = 'مرحباً بك في خزنتك الجديدة! اختر رمزاً مرئياً واكتب كلمة مرور قوية أو ارسم نمطاً لتشفير بياناتك.';
                 }
             } catch (error) {
                 $('master-password-prompt').textContent = 'حدث خطأ في جلب البيانات. تأكد من قواعد الحماية Firestore Rules.';
@@ -841,10 +1727,65 @@
         
         async function saveEntries() {
             if (masterKey && vaultDocRef && userSalt) {
+                let encVaultKey = "";
+                let encRecVaultKey = "";
+                let recSalt = "";
+                
+                try {
+                    const docSnap = await getDoc(vaultDocRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        encVaultKey = data.encryptedVaultKey || "";
+                        encRecVaultKey = data.encryptedRecoveryVaultKey || "";
+                        recSalt = data.recoverySalt || "";
+                    }
+                } catch(e) {}
+
                 const vaultData = { entries: entries, categories: customCategories };
                 const encryptedData = await encryptData(JSON.stringify(vaultData), masterKey);
-                await setDoc(vaultDocRef, { encrypted: encryptedData, salt: userSalt });
+                
+                await setDoc(vaultDocRef, {
+                    encrypted: encryptedData,
+                    salt: userSalt,
+                    encryptedVaultKey: encVaultKey || (window.currentNewEncryptedVaultKey || ""),
+                    encryptedRecoveryVaultKey: encRecVaultKey || (window.currentNewEncryptedRecoveryVaultKey || ""),
+                    recoverySalt: recSalt || (window.currentNewRecoverySalt || "")
+                });
             }
+        }
+
+        function showRecoveryKeyModal(keyStr, onContinue, customTitle = null) {
+            $('recovery-key-text').textContent = keyStr;
+            $('recovery-confirm-checkbox').checked = false;
+            $('btn-recovery-continue').disabled = true;
+            
+            if (customTitle) {
+                $('recovery-display-title').textContent = 'مفتاح استعادة طارئ جديد';
+                $('recovery-display-desc').textContent = customTitle;
+            } else {
+                $('recovery-display-title').textContent = 'مفتاح الاستعادة الطارئ';
+                $('recovery-display-desc').textContent = 'هذا المفتاح هو وسيلتك الوحيدة لاسترجاع بياناتك إذا نسيت كلمة المرور الرئيسية. لن نتمكن من مساعدتك في استعادتها إذا فقدته!';
+            }
+            
+            $('recovery-key-display-modal').classList.remove('hidden');
+            
+            const checkbox = $('recovery-confirm-checkbox');
+            const contBtn = $('btn-recovery-continue');
+            
+            const newContBtn = contBtn.cloneNode(true);
+            contBtn.parentNode.replaceChild(newContBtn, contBtn);
+            
+            const newCheckbox = checkbox.cloneNode(true);
+            checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+            
+            newCheckbox.addEventListener('change', () => {
+                newContBtn.disabled = !newCheckbox.checked;
+            });
+            
+            newContBtn.addEventListener('click', () => {
+                $('recovery-key-display-modal').classList.add('hidden');
+                if (onContinue) onContinue();
+            });
         }
         
         // --- Auth Logic ---
@@ -931,11 +1872,41 @@
 
         $('logout-button').addEventListener('click', () => signOut(auth));
 
+        // --- Unlock screen Tab switches ---
+        $('lock-tab-pwd').addEventListener('click', () => {
+            $('lock-tab-pwd').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+            $('lock-tab-pattern').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+            $('master-password-input-container').classList.remove('hidden');
+            $('master-pattern-input-container').classList.add('hidden');
+            lockMode = 'pwd';
+        });
+
+        $('lock-tab-pattern').addEventListener('click', () => {
+            $('lock-tab-pattern').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+            $('lock-tab-pwd').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+            $('master-pattern-input-container').classList.remove('hidden');
+            $('master-password-input-container').classList.add('hidden');
+            lockMode = 'pattern';
+            if (lockPatternInstance) lockPatternInstance.draw(); // redraw to fit canvas
+        });
+
+        $('clear-lock-pattern').addEventListener('click', () => {
+            currentLockPattern = "";
+            if (lockPatternInstance) lockPatternInstance.clear();
+        });
+
         // --- Master Password Logic (With Backward Compatibility & Auto-Upgrade) ---
         $('master-password-submit').addEventListener('click', async () => {
-            const password = $('master-password-input').value;
+            let password = "";
+            if (lockMode === 'pwd') {
+                password = $('master-password-input').value;
+                if (password.length < 4) { $('master-password-error').textContent = 'كلمة المرور قصيرة جداً.'; return; }
+            } else {
+                password = currentLockPattern;
+                if (!password) { $('master-password-error').textContent = 'يرجى رسم النمط الخاص بك أولاً.'; return; }
+            }
+
             const selectedElement = document.querySelector('input[name="sec_element"]:checked').value;
-            if (password.length < 4) { $('master-password-error').textContent = 'كلمة المرور قصيرة جداً.'; return; }
             $('master-password-error').textContent = '';
             
             const btn = $('master-password-submit');
@@ -950,77 +1921,155 @@
                     // 🛡️ إنشاء خزانة جديدة: توليد Salt ديناميكي 16-Byte وبـ 600 ألف تكرار
                     const saltArray = window.crypto.getRandomValues(new Uint8Array(16));
                     userSalt = btoa(String.fromCharCode.apply(null, saltArray));
-                    masterKey = await deriveKey(combinedSecret, userSalt, ITERATIONS);
                     
-                    masterPasswordSection.classList.add('hidden'); appSection.classList.remove('hidden');
-                    listenForEntries();
-                    resetInactivityTimer();
-                    showToast('تم إعداد الخزنة بنجاح!', 'success');
+                    // 1. توليد Vault Key عشوائي
+                    const vKey = await generateVaultKey();
+                    const rawVKey = await window.crypto.subtle.exportKey('raw', vKey);
+                    
+                    // 2. تشفير Vault Key بمفتاح المرور
+                    const passwordKey = await deriveKey(combinedSecret, userSalt, ITERATIONS);
+                    const encryptedVaultKey = await encryptDataRaw(rawVKey, passwordKey);
+                    
+                    // 3. توليد مفتاح الاستعادة وتشفير Vault Key به
+                    const recoveryKeyStr = generateRecoveryKeyString();
+                    const recSaltArray = window.crypto.getRandomValues(new Uint8Array(16));
+                    const recoverySaltStr = btoa(String.fromCharCode.apply(null, recSaltArray));
+                    const recoveryKeyMaterial = await deriveKey(recoveryKeyStr, recoverySaltStr, ITERATIONS);
+                    const encryptedRecoveryVaultKey = await encryptDataRaw(rawVKey, recoveryKeyMaterial);
+                    
+                    // 4. حفظ المتغيرات مؤقتاً في النافذة ليتم استخدامها في saveEntries
+                    window.currentNewEncryptedVaultKey = encryptedVaultKey;
+                    window.currentNewEncryptedRecoveryVaultKey = encryptedRecoveryVaultKey;
+                    window.currentNewRecoverySalt = recoverySaltStr;
+                    
+                    masterKey = vKey;
+                    
+                    // تهيئة الخزانة فارغة وحفظها
+                    await saveEntries();
+                    
+                    // تنظيف الحفظ المؤقت
+                    window.currentNewEncryptedVaultKey = null;
+                    window.currentNewEncryptedRecoveryVaultKey = null;
+                    window.currentNewRecoverySalt = null;
+
+                    // إظهار مفتاح الاستعادة للمستخدم ودخول الخزنة
+                    showRecoveryKeyModal(recoveryKeyStr, () => {
+                        masterPasswordSection.classList.add('hidden'); 
+                        appSection.classList.remove('hidden');
+                        listenForEntries();
+                        resetInactivityTimer();
+                    });
                 } else {
                     // 🔐 فتح خزانة موجودة
                     const data = docSnap.data();
                     const encryptedBlob = data.encrypted;
                     const dbSalt = data.salt;
 
-                    let decryptedData = null;
-                    let needsUpgrade = false;
-
-                    // 🛠️ نظام التوافق الرجعي: تجربة كافة المعايير القديمة والحديثة لفك التشفير
-                    const configsToTry = [
-                        { salt: dbSalt, iters: ITERATIONS }, // المعيار الحديث
-                        { salt: dbSalt || 'somesalt-that-is-not-so-random', iters: 100000 }, // المعيار القديم جداً (ما تسبب في مشكلتك)
-                        { salt: 'somesalt-that-is-not-so-random', iters: ITERATIONS }, // معيار وسيط
-                        { salt: 'somesalt-that-is-not-so-random', iters: 100000 } // احتياطي أخير
-                    ];
-
-                    for (let conf of configsToTry) {
-                        if (!conf.salt) continue;
+                    if (data.encryptedVaultKey) {
+                        // البنية الحديثة (معيار Vault Key المزدوج)
+                        let decryptedVaultKeyRaw = null;
                         try {
-                            const tempKey = await deriveKey(combinedSecret, conf.salt, conf.iters);
-                            const result = await decryptData(encryptedBlob, tempKey);
-                            if (result) {
-                                decryptedData = result;
-                                masterKey = tempKey;
-                                userSalt = conf.salt;
-                                // إذا كانت الخزنة مشفرة بالطريقة القديمة، نعلم النظام أنه يجب الترقية
-                                if (conf.salt === 'somesalt-that-is-not-so-random' || conf.iters < ITERATIONS) {
-                                    needsUpgrade = true;
-                                }
-                                break; // نجح فك التشفير، نخرج من الحلقة
-                            }
-                        } catch(e) { } 
-                    }
-
-                    // في حال نجاح فك التشفير بأي من المعايير
-                    if (decryptedData) {
-                        masterPasswordSection.classList.add('hidden'); 
-                        appSection.classList.remove('hidden');
+                            const passwordKey = await deriveKey(combinedSecret, dbSalt, ITERATIONS);
+                            decryptedVaultKeyRaw = await decryptDataRaw(data.encryptedVaultKey, passwordKey);
+                        } catch(e) {}
                         
-                        // 🔄 ترقية تلقائية للخزائن القديمة!
-                        if (needsUpgrade) {
+                        if (decryptedVaultKeyRaw) {
+                            masterKey = await window.crypto.subtle.importKey('raw', decryptedVaultKeyRaw, { name: ALGORITHM, length: KEY_LENGTH }, true, ['encrypt', 'decrypt']);
+                            userSalt = dbSalt;
+                            
+                            const decryptedJSON = await decryptData(encryptedBlob, masterKey);
+                            if (decryptedJSON) {
+                                const parsedData = JSON.parse(decryptedJSON);
+                                entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
+                                customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                                
+                                masterPasswordSection.classList.add('hidden'); 
+                                appSection.classList.remove('hidden');
+                                listenForEntries();
+                                resetInactivityTimer();
+                                showToast('تم فتح الخزنة بنجاح!', 'success');
+                            } else {
+                                $('master-password-error').textContent = 'فشل فك تشفير البيانات. قد يكون مفتاح التشفير غير متطابق.';
+                            }
+                        } else {
+                            $('master-password-error').textContent = 'مفتاح فك التشفير أو العنصر المرئي غير صحيح.';
+                        }
+                    } else {
+                        // البنية القديمة (ترقية تلقائية وتوافق رجعي)
+                        let decryptedData = null;
+                        
+                        const configsToTry = [
+                            { salt: dbSalt, iters: ITERATIONS }, 
+                            { salt: dbSalt || 'somesalt-that-is-not-so-random', iters: 100000 }, 
+                            { salt: 'somesalt-that-is-not-so-random', iters: ITERATIONS }, 
+                            { salt: 'somesalt-that-is-not-so-random', iters: 100000 } 
+                        ];
+
+                        for (let conf of configsToTry) {
+                            if (!conf.salt) continue;
+                            try {
+                                const tempKey = await deriveKey(combinedSecret, conf.salt, conf.iters);
+                                const result = await decryptData(encryptedBlob, tempKey);
+                                if (result) {
+                                    decryptedData = result;
+                                    break; 
+                                }
+                            } catch(e) { } 
+                        }
+
+                        if (decryptedData) {
+                            const parsedData = JSON.parse(decryptedData);
+                            entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
+                            customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                            
+                            // 1. توليد Salt جديد للتوافق
                             const saltArray = window.crypto.getRandomValues(new Uint8Array(16));
                             userSalt = btoa(String.fromCharCode.apply(null, saltArray));
-                            masterKey = await deriveKey(combinedSecret, userSalt, ITERATIONS); // التشفير الجديد 600,000
                             
-                            const parsedData = JSON.parse(decryptedData);
-                            entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
-                            customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
-                            await saveEntries(); // حفظ بالـ Salt الجديد والإعدادات القوية
-                            showToast('تم ترقية حماية خزنتك لمعيار 600 ألف تكرار بنجاح!', 'success');
+                            // 2. توليد Vault Key عشوائي
+                            const vKey = await generateVaultKey();
+                            const rawVKey = await window.crypto.subtle.exportKey('raw', vKey);
+                            
+                            // 3. تشفير Vault Key بمفتاح المرور
+                            const passwordKey = await deriveKey(combinedSecret, userSalt, ITERATIONS);
+                            const encryptedVaultKey = await encryptDataRaw(rawVKey, passwordKey);
+                            
+                            // 4. توليد مفتاح الاستعادة وتشفير Vault Key به
+                            const recoveryKeyStr = generateRecoveryKeyString();
+                            const recSaltArray = window.crypto.getRandomValues(new Uint8Array(16));
+                            const recoverySaltStr = btoa(String.fromCharCode.apply(null, recSaltArray));
+                            const recoveryKeyMaterial = await deriveKey(recoveryKeyStr, recoverySaltStr, ITERATIONS);
+                            const encryptedRecoveryVaultKey = await encryptDataRaw(rawVKey, recoveryKeyMaterial);
+                            
+                            // 5. حفظ البيانات بـ Vault Key الجديد
+                            const newEncryptedData = await encryptData(JSON.stringify({ entries, categories: customCategories }), vKey);
+                            
+                            // 6. الحفظ لـ Firestore
+                            await setDoc(vaultDocRef, {
+                                encrypted: newEncryptedData,
+                                salt: userSalt,
+                                encryptedVaultKey: encryptedVaultKey,
+                                encryptedRecoveryVaultKey: encryptedRecoveryVaultKey,
+                                recoverySalt: recoverySaltStr
+                            });
+                            
+                            masterKey = vKey;
+                            
+                            // 7. إظهار مفتاح الاستعادة للمستخدم
+                            showRecoveryKeyModal(recoveryKeyStr, () => {
+                                masterPasswordSection.classList.add('hidden'); 
+                                appSection.classList.remove('hidden');
+                                listenForEntries();
+                                resetInactivityTimer();
+                            }, 'لقد قمنا بترقية معايير أمان خزنتك بنجاح! هذا هو مفتاح الاستعادة الطارئ الخاص بك. يرجى حفظه فوراً.');
                         } else {
-                            const parsedData = JSON.parse(decryptedData);
-                            entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
-                            customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                            $('master-password-error').textContent = 'مفتاح فك التشفير أو العنصر المرئي غير صحيح.';
                         }
-                        
-                        listenForEntries();
-                        resetInactivityTimer();
-                    } else {
-                        $('master-password-error').textContent = 'كلمة المرور أو العنصر المرئي غير صحيح.';
                     }
                 }
             } catch (e) { 
-                $('master-password-error').textContent = 'حدث خطأ غير متوقع في التشفير.'; 
+                console.error("Master Password Submit Error:", e);
+                $('master-password-error').textContent = 'حدث خطأ غير متوقع في التشفير: ' + e.message; 
             } 
             finally { btn.textContent = 'فتح الخزنة'; btn.disabled = false; }
         });
@@ -1042,87 +2091,264 @@
             const tabsContainer = $('category-tabs');
             tabsContainer.innerHTML = '';
             
-            ['الكل', 'عام', ...customCategories].forEach(cat => {
+            // Category counting
+            const counts = { 'الكل': entries.length, 'عام': entries.filter(e => (e.category || 'عام') === 'عام').length };
+            customCategories.forEach(cat => {
+                counts[cat] = entries.filter(e => e.category === cat).length;
+            });
+            const favoriteCount = entries.filter(e => e.favorite === true).length;
+            counts['المفضلة'] = favoriteCount;
+            
+            const tabsList = ['الكل', 'المفضلة', 'عام', ...customCategories];
+            
+            tabsList.forEach(cat => {
+                const count = counts[cat] || 0;
+                let labelText = cat;
+                if (cat === 'المفضلة') {
+                    labelText = `★ المفضلة (${count})`;
+                } else {
+                    labelText = `${cat} (${count})`;
+                }
+                
                 const btn = document.createElement('button');
-                btn.textContent = cat; 
+                btn.textContent = labelText; 
                 btn.className = `whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                     currentCategory === cat ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-white'
                 }`;
-                btn.onclick = () => { currentCategory = cat; applyFilters(); };
+                btn.onclick = () => { currentCategory = cat; currentAuditFilter = 'all'; updateAuditActiveCard(); applyFilters(); };
                 tabsContainer.appendChild(btn);
             });
 
             const manageBtn = document.createElement('button');
-            manageBtn.innerHTML = '<i class="ph-bold ph-gear"></i> إدارة'; // Static safe
+            manageBtn.innerHTML = '<i class="ph-bold ph-gear"></i> إدارة'; 
             manageBtn.className = `whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-white flex items-center gap-1 mr-2`;
             manageBtn.onclick = () => { renderManageCategories(); $('manage-categories-modal').classList.remove('hidden'); };
             tabsContainer.appendChild(manageBtn);
         }
 
         function applyFilters() {
-            const query = $('search-input').value.toLowerCase();
-            displayedEntries = entries.filter(entry => {
+            const query = $('search-input').value.toLowerCase().trim();
+            
+            // Map entries to include original index before filtering
+            displayedEntries = entries.map((entry, index) => ({ entry, index })).filter(({ entry }) => {
                 const entryCat = entry.category || 'عام'; 
                 const matchesCategory = currentCategory === 'الكل' || entryCat === currentCategory;
                 const matchesSearch = entry.website.toLowerCase().includes(query) || entry.username.toLowerCase().includes(query);
-                return matchesCategory && matchesSearch;
+                const matchesFavorite = currentCategory === 'المفضلة' ? entry.favorite === true : true;
+                
+                let matchesAudit = true;
+                if (currentAuditFilter === 'weak') {
+                    matchesAudit = (entry.password || '').length < 8;
+                } else if (currentAuditFilter === 'reused') {
+                    const p = entry.password || '';
+                    const duplicateCount = entries.filter(e => e.password === p).length;
+                    matchesAudit = duplicateCount > 1;
+                }
+
+                const matchesCatFilter = currentCategory === 'المفضلة' ? true : matchesCategory;
+                return matchesCatFilter && matchesSearch && matchesAudit && matchesFavorite;
             });
+
+            // Sorting logic
+            const sortVal = $('sort-select').value;
+            if (sortVal === 'name-asc') {
+                displayedEntries.sort((a, b) => a.entry.website.localeCompare(b.entry.website));
+            } else if (sortVal === 'name-desc') {
+                displayedEntries.sort((a, b) => b.entry.website.localeCompare(a.entry.website));
+            } else if (sortVal === 'date-new') {
+                displayedEntries.sort((a, b) => b.index - a.index);
+            } else if (sortVal === 'date-old') {
+                displayedEntries.sort((a, b) => a.index - b.index);
+            } else if (sortVal === 'fav-first') {
+                displayedEntries.sort((a, b) => {
+                    const favA = a.entry.favorite ? 1 : 0;
+                    const favB = b.entry.favorite ? 1 : 0;
+                    return favB - favA;
+                });
+            } else if (sortVal === 'strength-weak') {
+                displayedEntries.sort((a, b) => {
+                    const scoreA = evaluatePasswordStrength(a.entry.password).score;
+                    const scoreB = evaluatePasswordStrength(b.entry.password).score;
+                    return scoreA - scoreB;
+                });
+            }
+
             renderCategoryTabs();
-            renderEntries();
+            updateSecurityAuditUI();
+            updateAuditActiveCard();
+            renderEntries(query);
         }
 
         $('search-input').addEventListener('input', applyFilters);
+        $('sort-select').addEventListener('change', applyFilters);
 
-        function renderEntries() {
+        function renderEntries(query = "") {
             const grid = $('entries-grid');
-            grid.innerHTML = ''; // safe clearing
+            grid.innerHTML = ''; 
             
+            const sortVal = $('sort-select').value;
+            const isCustomSort = (sortVal === 'custom');
+
+            console.log("Rendering entries. Custom Sort Active:", isCustomSort);
+
             if (displayedEntries.length === 0) {
                 $('no-entries-message').classList.remove('hidden');
             } else {
                 $('no-entries-message').classList.add('hidden');
                 
-                displayedEntries.forEach((entry) => {
-                    const originalIndex = entries.findIndex(e => e.website === entry.website && e.username === entry.username);
+                displayedEntries.forEach((item) => {
+                    const entry = item.entry;
+                    const originalIndex = item.index;
                     const entryCat = entry.category || 'عام';
                     const colorId = entry.color || 'default';
                     const colorObj = CARD_COLORS.find(c => c.id === colorId) || CARD_COLORS[0];
                     
                     const card = document.createElement('div');
-                    card.className = 'glass-card rounded-2xl p-5 shadow-lg transition-all duration-300 flex flex-col h-full hover:-translate-y-1';
-                    if(colorId !== 'default') card.style.background = colorObj.bg;
+                    card.className = 'glass-card rounded-2xl p-5 shadow-lg transition-all duration-300 flex flex-col h-full hover:-translate-y-1 relative';
+                    if (colorId !== 'default') {
+                        card.style.background = colorObj.bg;
+                        card.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                    }
+
+                    // Audit indicators for weak/reused passwords on cards
+                    const isWeak = (entry.password || '').length < 8;
+                    const isReused = entries.filter(e => e.password === entry.password).length > 1;
+                    let warningBadge = '';
+                    if (isWeak) {
+                        warningBadge = `<span class="bg-red-500 bg-opacity-25 border border-red-500 text-red-400 text-[9px] px-1.5 py-0.5 rounded-md font-bold" title="كلمة مرور ضعيفة">⚠️ ضعيفة</span>`;
+                    } else if (isReused) {
+                        warningBadge = `<span class="bg-orange-500 bg-opacity-25 border border-orange-500 text-orange-400 text-[9px] px-1.5 py-0.5 rounded-md font-bold" title="كلمة مرور مكررة">⚠️ مكررة</span>`;
+                    }
+
+                    const isFav = entry.favorite === true;
+                    const favIconClass = isFav ? 'ph-fill ph-star text-yellow-400' : 'ph-bold ph-star text-gray-500 hover:text-yellow-400';
+                    const favTitle = isFav ? 'إزالة هذا الحساب من المفضلة ★' : 'إضافة هذا الحساب إلى المفضلة لتثبيته في تبويب المفضلة للوصول السريع';
+
+                    // Drag handle layout if custom sorting is active
+                    const dragHandleHTML = isCustomSort ? `
+                        <div class="drag-handle cursor-grab active:cursor-grabbing text-emerald-400 p-1 flex items-center justify-center mr-1 border border-emerald-500 border-opacity-20 rounded-md bg-emerald-950 bg-opacity-25 transition-all hover:bg-opacity-50" title="اضغط واسحب يدوياً لإعادة ترتيب الكارت">
+                            <i class="ph-bold ph-dots-six-vertical text-lg"></i>
+                        </div>
+                    ` : '';
 
                     card.innerHTML = `
-                        <div class="flex items-start justify-between mb-4 w-full">
+                        <!-- Cyber tag for tech look -->
+                        <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] font-mono tracking-widest bg-emerald-950 bg-opacity-50 text-emerald-400 border border-emerald-500 border-opacity-25 select-none" style="z-index: 1;">[ SECURED ]</div>
+                        
+                        <div class="flex items-start justify-between mb-4 w-full pt-2" style="z-index: 2;">
                             <div class="flex items-start gap-3 flex-grow min-w-0">
-                                <div class="dyn-icon w-12 h-12 min-w-[3rem] rounded-xl bg-black bg-opacity-20 flex flex-shrink-0 items-center justify-center text-2xl font-bold text-white border border-white border-opacity-10 shadow-inner overflow-hidden relative group-hover:scale-105 transition-transform duration-300"></div>
+                                <div class="dyn-icon w-12 h-12 min-w-[3rem] rounded-xl bg-black bg-opacity-30 flex flex-shrink-0 items-center justify-center text-2xl font-bold text-white border border-emerald-500 border-opacity-20 shadow-inner overflow-hidden relative group-hover:scale-105 transition-transform duration-300" title="الحرف الأول من اسم الموقع" style="box-shadow: 0 0 10px rgba(16,185,129,0.1);"></div>
                                 <div class="flex flex-col min-w-0 pt-0.5">
-                                    <h3 class="dyn-website font-bold text-[16px] leading-tight text-white break-words line-clamp-2" dir="auto"></h3>
-                                    <span class="dyn-cat inline-block px-2 py-0.5 mt-1 bg-black bg-opacity-20 border border-white border-opacity-10 rounded-md text-[10px] text-gray-300 self-start"></span>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h3 class="dyn-website font-bold text-[16px] leading-tight text-white break-words line-clamp-2" dir="auto" title="اسم الموقع الإلكتروني أو الخدمة"></h3>
+                                        ${warningBadge}
+                                    </div>
+                                    <span class="dyn-cat inline-block px-2 py-0.5 mt-1 bg-emerald-950 bg-opacity-40 border border-emerald-500 border-opacity-20 rounded-md text-[10px] text-gray-300 self-start" title="التصنيف الحالي المحفوظ تحته هذا الحساب"></span>
                                 </div>
                             </div>
+                            <div class="flex items-center gap-1" style="z-index: 2;">
+                                ${dragHandleHTML}
+                                <button class="btn-fav text-2xl focus:outline-none transition-transform hover:scale-125 ml-1" title="${favTitle}">
+                                    <i class="${favIconClass}"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="mt-auto mb-4 bg-black bg-opacity-20 hover:bg-opacity-30 border border-white border-opacity-5 rounded-xl p-3 flex justify-between items-center group/user transition-colors">
-                            <p class="dyn-username text-sm font-mono text-gray-200 truncate text-left w-full" dir="ltr"></p>
-                            <button class="btn-copy-u text-gray-400 hover:text-white bg-black bg-opacity-20 hover:bg-opacity-50 p-1.5 rounded-lg transition-all ml-2" title="نسخ البريد/الرقم"><i class="ph-bold ph-copy text-lg"></i></button>
+                        
+                        <div class="mt-auto mb-4 bg-black bg-opacity-30 hover:bg-opacity-40 border border-emerald-500 border-opacity-10 rounded-xl p-3 flex justify-between items-center group/user transition-colors" style="z-index: 2; box-shadow: inset 0 0 8px rgba(0,0,0,0.4);">
+                            <p class="dyn-username text-sm font-mono text-gray-200 truncate text-left w-full" dir="ltr" title="اسم المستخدم أو البريد الإلكتروني الخاص بالحساب"></p>
+                            <button class="btn-copy-u text-gray-400 hover:text-emerald-400 bg-black bg-opacity-25 hover:bg-opacity-60 p-1.5 rounded-lg transition-all ml-2" title="نسخ البريد الإلكتروني أو اسم المستخدم مباشرة للحافظة"><i class="ph-bold ph-copy text-lg"></i></button>
                         </div>
-                        <div class="flex gap-2 pt-4 border-t border-white border-opacity-10 mt-auto">
-                            <button class="btn-copy-p flex-1 bg-black bg-opacity-20 hover:bg-emerald-500 hover:bg-opacity-40 text-gray-300 hover:text-white py-3 rounded-xl border border-transparent transition-all flex justify-center items-center" title="نسخ كلمة المرور"><i class="ph-bold ph-key text-2xl drop-shadow-md"></i></button>
-                            <button class="btn-edit flex-1 bg-black bg-opacity-20 hover:bg-blue-500 hover:bg-opacity-40 text-gray-300 hover:text-white py-3 rounded-xl border border-transparent transition-all flex justify-center items-center" title="تعديل الحساب"><i class="ph-bold ph-pencil-simple text-2xl drop-shadow-md"></i></button>
-                            <button class="btn-delete flex-1 bg-black bg-opacity-20 hover:bg-red-500 hover:bg-opacity-40 text-gray-300 hover:text-white py-3 rounded-xl border border-transparent transition-all flex justify-center items-center" title="حذف الحساب"><i class="ph-bold ph-trash text-2xl drop-shadow-md"></i></button>
+                        
+                        <div class="flex gap-2 pt-4 border-t border-white border-opacity-10 mt-auto" style="z-index: 2;">
+                            <button class="btn-view flex-1 bg-black bg-opacity-30 hover:bg-emerald-500 hover:bg-opacity-20 text-gray-300 hover:text-white py-3 rounded-xl border border-emerald-500 border-opacity-10 hover:border-opacity-40 transition-all flex justify-center items-center" title="عرض تفاصيل الحساب الكاملة ورؤية كلمة المرور بوضوح بشكل آمن"><i class="ph-bold ph-eye text-2xl drop-shadow-md"></i></button>
+                            <button class="btn-copy-p flex-1 bg-black bg-opacity-30 hover:bg-emerald-500 hover:bg-opacity-20 text-gray-300 hover:text-white py-3 rounded-xl border border-emerald-500 border-opacity-10 hover:border-opacity-40 transition-all flex justify-center items-center" title="نسخ كلمة المرور مباشرة إلى الحافظة (ستُمسح تلقائياً بعد 30 ثانية للأمان القصوى)"><i class="ph-bold ph-key text-2xl drop-shadow-md"></i></button>
+                            <button class="btn-edit flex-1 bg-black bg-opacity-30 hover:bg-emerald-500 hover:bg-opacity-20 text-gray-300 hover:text-white py-3 rounded-xl border border-emerald-500 border-opacity-10 hover:border-opacity-40 transition-all flex justify-center items-center" title="تعديل تفاصيل هذا الحساب (الاسم، التصنيف، كلمة المرور، أو اللون)"><i class="ph-bold ph-pencil-simple text-2xl drop-shadow-md"></i></button>
+                            <button class="btn-delete flex-1 bg-black bg-opacity-30 hover:bg-red-500 hover:bg-opacity-20 text-gray-300 hover:text-red-400 py-3 rounded-xl border border-red-500 border-opacity-10 hover:border-opacity-40 transition-all flex justify-center items-center" title="حذف هذا الحساب نهائياً من خزنتك المشفرة"><i class="ph-bold ph-trash text-2xl drop-shadow-md"></i></button>
                         </div>
                     `;
 
                     card.querySelector('.dyn-icon').textContent = getFirstLetter(entry.website);
-                    card.querySelector('.dyn-website').textContent = entry.website;
-                    card.querySelector('.dyn-website').title = entry.website;
                     card.querySelector('.dyn-cat').textContent = entryCat;
-                    card.querySelector('.dyn-username').textContent = entry.username;
+                    
+                    // Highlighting match safely
+                    card.querySelector('.dyn-website').innerHTML = highlightMatch(entry.website, query);
+                    card.querySelector('.dyn-username').innerHTML = highlightMatch(entry.username, query);
+
+                    // Star Favorite Action
+                    card.querySelector('.btn-fav').addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        entry.favorite = !entry.favorite;
+                        const originalEntry = entries[originalIndex];
+                        if (originalEntry) originalEntry.favorite = entry.favorite;
+                        await saveEntries();
+                        showToast(entry.favorite ? 'تمت إضافة الحساب للمفضلة ★' : 'تمت الإزالة من المفضلة', 'success');
+                        applyFilters();
+                    });
 
                     card.querySelector('.btn-copy-u').addEventListener('click', () => window.copyUsername(originalIndex));
                     card.querySelector('.btn-copy-p').addEventListener('click', () => window.copyPassword(originalIndex));
+                    card.querySelector('.btn-view').addEventListener('click', () => window.viewEntry(originalIndex));
                     card.querySelector('.btn-edit').addEventListener('click', () => window.editEntry(originalIndex));
                     card.querySelector('.btn-delete').addEventListener('click', () => window.deleteEntry(originalIndex));
+
+                    // HTML5 Drag-and-Drop Events Binding
+                    if (isCustomSort) {
+                        card.draggable = true;
+                        let dragCounter = 0;
+                        
+                        card.addEventListener('dragstart', (e) => {
+                            console.log("Drag Start on Index:", originalIndex);
+                            card.classList.add('dragging');
+                            e.dataTransfer.setData('text/plain', String(originalIndex));
+                            e.dataTransfer.effectAllowed = 'move';
+                        });
+                        
+                        card.addEventListener('dragend', () => {
+                            console.log("Drag End on Index:", originalIndex);
+                            card.classList.remove('dragging');
+                            dragCounter = 0;
+                            document.querySelectorAll('#entries-grid .glass-card').forEach(c => c.classList.remove('drag-over-card'));
+                        });
+                        
+                        card.addEventListener('dragenter', (e) => {
+                            e.preventDefault();
+                            dragCounter++;
+                            card.classList.add('drag-over-card');
+                        });
+
+                        card.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                        });
+                        
+                        card.addEventListener('dragleave', () => {
+                            dragCounter--;
+                            if (dragCounter === 0) {
+                                card.classList.remove('drag-over-card');
+                            }
+                        });
+                        
+                        card.addEventListener('drop', async (e) => {
+                            e.preventDefault();
+                            card.classList.remove('drag-over-card');
+                            dragCounter = 0;
+                            
+                            const draggedIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                            const targetIdx = originalIndex;
+                            console.log("Drop! Dragged Index:", draggedIdx, "Dropped on Target Index:", targetIdx);
+                            
+                            if (!isNaN(draggedIdx) && draggedIdx !== targetIdx) {
+                                // Reorder items in entries array
+                                const draggedItem = entries.splice(draggedIdx, 1)[0];
+                                entries.splice(targetIdx, 0, draggedItem);
+                                
+                                // Save and redraw
+                                await saveEntries();
+                                applyFilters();
+                                showToast('تم تحديث الترتيب وحفظه سحابياً', 'success');
+                            }
+                        });
+                    }
 
                     grid.appendChild(card);
                 });
@@ -1142,9 +2368,11 @@
             customCategories.forEach(cat => {
                 const item = document.createElement('div');
                 item.className = 'flex justify-between items-center bg-gray-800 border border-gray-700 p-3 rounded-xl';
+                
                 const span = document.createElement('span');
                 span.className = 'text-white text-sm';
                 span.textContent = cat; 
+                
                 const btn = document.createElement('button');
                 btn.className = 'text-gray-400 hover:text-red-400 transition-colors p-1';
                 btn.title = 'حذف التصنيف';
@@ -1158,7 +2386,7 @@
         $('add-category-btn').addEventListener('click', async () => {
             const input = $('new-category-input'); const newCat = input.value.trim();
             if(!newCat) { showToast('اكتب اسم التصنيف أولاً', 'error'); return; }
-            if(newCat === 'الكل' || newCat === 'عام' || customCategories.includes(newCat)) { showToast('هذا التصنيف موجود بالفعل', 'error'); return; }
+            if(newCat === 'الكل' || newCat === 'عام' || newCat === 'المفضلة' || customCategories.includes(newCat)) { showToast('هذا التصنيف موجود بالفعل', 'error'); return; }
 
             customCategories.push(newCat); await saveEntries(); 
             input.value = ''; renderManageCategories(); updateCategorySelects(); applyFilters(); showToast('تمت إضافة التصنيف بنجاح', 'success');
@@ -1175,21 +2403,295 @@
             });
         };
 
+        // --- Security Settings Modal Logic (Master Credentials Change) ---
+        window.openSettingsModal = function() {
+            $('settings-verify-pwd-input').value = '';
+            $('settings-verify-error').textContent = '';
+            $('settings-new-pwd-input').value = '';
+            $('settings-new-error').textContent = '';
+            
+            // Render 25 Elements grids inside Settings
+            renderSecurityElementsGrid('settings-verify-elements', 'settings-verify-sec_element', 'FIRE');
+            renderSecurityElementsGrid('settings-new-elements', 'settings-new-sec_element', 'FIRE');
+
+            // Reset tabs
+            $('settings-verify-tab-pwd').click();
+            $('settings-new-tab-pwd').click();
+
+            // Clear canvases
+            currentVerifyPattern = "";
+            currentNewPattern = "";
+            if (verifyPatternInstance) verifyPatternInstance.clear();
+            if (newPatternInstance) newPatternInstance.clear();
+
+            if (window.isRecoveredSession) {
+                // Skip verification step
+                $('settings-verify-step').classList.add('hidden');
+                $('settings-new-step').classList.remove('hidden');
+            } else {
+                // Reset flow steps
+                $('settings-verify-step').classList.remove('hidden');
+                $('settings-new-step').classList.add('hidden');
+            }
+            
+            $('settings-modal').classList.remove('hidden');
+        };
+
+        // Settings Verify tab switches
+        $('settings-verify-tab-pwd').addEventListener('click', () => {
+            $('settings-verify-tab-pwd').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+            $('settings-verify-tab-pattern').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+            $('settings-verify-pwd-container').classList.remove('hidden');
+            $('settings-verify-pattern-container').classList.add('hidden');
+            verifyMode = 'pwd';
+        });
+
+        $('settings-verify-tab-pattern').addEventListener('click', () => {
+            $('settings-verify-tab-pattern').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+            $('settings-verify-tab-pwd').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+            $('settings-verify-pattern-container').classList.remove('hidden');
+            $('settings-verify-pwd-container').classList.add('hidden');
+            verifyMode = 'pattern';
+            if (verifyPatternInstance) verifyPatternInstance.draw();
+        });
+
+        $('clear-settings-verify-pattern').addEventListener('click', () => {
+            currentVerifyPattern = "";
+            if (verifyPatternInstance) verifyPatternInstance.clear();
+        });
+
+        // Settings New tab switches
+        $('settings-new-tab-pwd').addEventListener('click', () => {
+            $('settings-new-tab-pwd').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+            $('settings-new-tab-pattern').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+            $('settings-new-pwd-container').classList.remove('hidden');
+            $('settings-new-pattern-container').classList.add('hidden');
+            newMode = 'pwd';
+        });
+
+        $('settings-new-tab-pattern').addEventListener('click', () => {
+            $('settings-new-tab-pattern').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-primary text-white shadow-md transition-all';
+            $('settings-new-tab-pwd').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition-all';
+            $('settings-new-pattern-container').classList.remove('hidden');
+            $('settings-new-pwd-container').classList.add('hidden');
+            newMode = 'pattern';
+            if (newPatternInstance) newPatternInstance.draw();
+        });
+
+        $('clear-settings-new-pattern').addEventListener('click', () => {
+            currentNewPattern = "";
+            if (newPatternInstance) newPatternInstance.clear();
+        });
+
+        // Watch new settings password strength
+        $('settings-new-pwd-input').addEventListener('input', () => {
+            const pwd = $('settings-new-pwd-input').value;
+            const evalResult = evaluatePasswordStrength(pwd);
+            const bar = $('settings-new-pwd-strength-bar');
+            const text = $('settings-new-pwd-strength-text');
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة كلمة المرور: ' + evalResult.text;
+            text.className = 'text-[10px] mt-1 h-3 ' + evalResult.color;
+        });
+
+        $('toggle-settings-new-pwd').addEventListener('click', () => {
+            const pwdInput = $('settings-new-pwd-input'), icon = $('toggle-settings-new-pwd').querySelector('i');
+            if (pwdInput.type === 'password') { pwdInput.type = 'text'; icon.className = 'ph-bold ph-eye-slash'; } 
+            else { pwdInput.type = 'password'; icon.className = 'ph-bold ph-eye'; }
+        });
+
+        // Verify Current Credentials Step
+        $('btn-settings-verify').addEventListener('click', async () => {
+            let password = "";
+            if (verifyMode === 'pwd') {
+                password = $('settings-verify-pwd-input').value;
+                if (password.length < 4) { $('settings-verify-error').textContent = 'كلمة المرور الحالية قصيرة جداً.'; return; }
+            } else {
+                password = currentVerifyPattern;
+                if (!password) { $('settings-verify-error').textContent = 'يرجى رسم نمط الحماية الحالي أولاً.'; return; }
+            }
+
+            const selectedElement = document.querySelector('input[name="settings-verify-sec_element"]:checked').value;
+            $('settings-verify-error').textContent = '';
+
+            const btn = $('btn-settings-verify');
+            const origText = btn.textContent;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> جاري التحقق...';
+            btn.disabled = true;
+
+            try {
+                const combinedSecret = password + "_" + selectedElement;
+                const docSnap = await getDoc(vaultDocRef);
+                const data = docSnap.data();
+                const encryptedBlob = data.encrypted;
+                const dbSalt = data.salt;
+
+                let decryptedData = null;
+                const configsToTry = [
+                    { salt: dbSalt, iters: ITERATIONS },
+                    { salt: dbSalt || 'somesalt-that-is-not-so-random', iters: 100000 },
+                    { salt: 'somesalt-that-is-not-so-random', iters: ITERATIONS },
+                    { salt: 'somesalt-that-is-not-so-random', iters: 100000 }
+                ];
+
+                for (let conf of configsToTry) {
+                    if (!conf.salt) continue;
+                    try {
+                        const tempKey = await deriveKey(combinedSecret, conf.salt, conf.iters);
+                        const result = await decryptData(encryptedBlob, tempKey);
+                        if (result) {
+                            decryptedData = result;
+                            break; 
+                        }
+                    } catch(e) {}
+                }
+
+                if (decryptedData) {
+                    // Current key is verified! Store decrypted entries in memory temporarily
+                    const parsedData = JSON.parse(decryptedData);
+                    entries = Array.isArray(parsedData) ? parsedData : (parsedData.entries || []);
+                    customCategories = parsedData.categories || ['عمل', 'تواصل اجتماعي', 'مالية', 'أخرى'];
+                    
+                    // Transition to step 2
+                    $('settings-verify-step').classList.add('hidden');
+                    $('settings-new-step').classList.remove('hidden');
+                } else {
+                    $('settings-verify-error').textContent = 'مفتاح التحقق الحالي أو الرمز المرئي غير صحيح.';
+                }
+            } catch (e) {
+                $('settings-verify-error').textContent = 'حدث خطأ في عملية التشفير.';
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        });
+
+        // Re-encrypt and Save New Credentials Step
+        $('btn-settings-save').addEventListener('click', async () => {
+            let newPassword = "";
+            if (newMode === 'pwd') {
+                newPassword = $('settings-new-pwd-input').value;
+                if (newPassword.length < 4) { $('settings-new-error').textContent = 'كلمة المرور الجديدة قصيرة جداً.'; return; }
+            } else {
+                newPassword = currentNewPattern;
+                if (!newPassword) { $('settings-new-error').textContent = 'يرجى رسم النمط الجديد أولاً.'; return; }
+            }
+
+            const newSelectedElement = document.querySelector('input[name="settings-new-sec_element"]:checked').value;
+            $('settings-new-error').textContent = '';
+
+            const btn = $('btn-settings-save');
+            const origText = btn.textContent;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> جاري تحديث التشفير...';
+            btn.disabled = true;
+
+            try {
+                const newCombinedSecret = newPassword + "_" + newSelectedElement;
+                
+                if (!masterKey) {
+                    // If masterKey is missing, we might need to retrieve it. If this is a recovery session, we generate a new vault key if we couldn't find one.
+                    // But in recovery, we imported it, so it is in masterKey.
+                    $('settings-new-error').textContent = 'انتهت الجلسة أو تعذر فك تشفير المفتاح. يرجى إعادة تسجيل الدخول.';
+                    return;
+                }
+                
+                // 1. توليد Salt لرمز المرور الجديد
+                const saltArray = window.crypto.getRandomValues(new Uint8Array(16));
+                const newPasswordSalt = btoa(String.fromCharCode.apply(null, saltArray));
+                
+                // 2. تشفير Vault Key بمفتاح المرور الجديد
+                const passwordKey = await deriveKey(newCombinedSecret, newPasswordSalt, ITERATIONS);
+                const rawVKey = await window.crypto.subtle.exportKey('raw', masterKey);
+                const encryptedVaultKey = await encryptDataRaw(rawVKey, passwordKey);
+                
+                // 3. توليد مفتاح الاستعادة وتشفير Vault Key به
+                const recoveryKeyStr = generateRecoveryKeyString();
+                const recSaltArray = window.crypto.getRandomValues(new Uint8Array(16));
+                const recoverySaltStr = btoa(String.fromCharCode.apply(null, recSaltArray));
+                const recoveryKeyMaterial = await deriveKey(recoveryKeyStr, recoverySaltStr, ITERATIONS);
+                const encryptedRecoveryVaultKey = await encryptDataRaw(rawVKey, recoveryKeyMaterial);
+                
+                // 4. تشفير البيانات بـ Vault Key
+                const vaultData = { entries: entries, categories: customCategories };
+                const encryptedData = await encryptData(JSON.stringify(vaultData), masterKey);
+                
+                // 5. حفظ كل شيء في Firestore
+                await setDoc(vaultDocRef, {
+                    encrypted: encryptedData,
+                    salt: newPasswordSalt,
+                    encryptedVaultKey: encryptedVaultKey,
+                    encryptedRecoveryVaultKey: encryptedRecoveryVaultKey,
+                    recoverySalt: recoverySaltStr
+                });
+                
+                userSalt = newPasswordSalt;
+                
+                $('settings-modal').classList.add('hidden');
+                
+                // 6. إظهار مفتاح الاستعادة الجديد للمستخدم، ثم القفل بعد ذلك
+                showRecoveryKeyModal(recoveryKeyStr, () => {
+                    showToast('تم تحديث معايير التشفير بنجاح!', 'success');
+                    window.isRecoveredSession = false;
+                    lockVault();
+                }, "تم تحديث معايير التشفير بنجاح! هذا هو مفتاح الاستعادة الجديد الخاص بك. يرجى حفظه فوراً.");
+            } catch (e) {
+                $('settings-new-error').textContent = 'فشل تحديث التشفير. تأكد من اتصال الإنترنت.';
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        });
+
         // --- Global Handlers ---
         window.openAddModal = function() {
             $('website-input').value = ''; $('username-input').value = ''; $('password-input').value = ''; $('category-input').value = 'عام';
             currentAddColor = 'default'; renderColorPicker('add-color-picker', currentAddColor, (id) => currentAddColor = id);
+            
+            // Reset strength meter in Add Modal
+            const bar = $('add-pwd-strength-bar');
+            bar.className = 'h-full transition-all duration-300 bg-gray-700';
+            bar.style.width = '0%';
+            $('add-pwd-strength-text').textContent = '';
+            
+            $('add-generator-section').classList.add('hidden');
             $('add-modal').classList.remove('hidden');
         };
 
         window.viewEntry = function(index) {
             const entry = entries[index];
-            $('modal-icon').textContent = getFirstLetter(entry.website); $('modal-website').textContent = entry.website;
-            $('modal-category').textContent = entry.category || 'عام'; $('modal-username').textContent = entry.username;
-            $('modal-password-text').textContent = entry.password;
-            const colorId = entry.color || 'default'; const colorObj = CARD_COLORS.find(c => c.id === colorId) || CARD_COLORS[0];
-            $('view-modal').querySelector('.glass-card').style.background = colorObj.bg; $('view-modal').classList.remove('hidden');
+            $('modal-icon').textContent = getFirstLetter(entry.website); 
+            $('modal-website').textContent = entry.website;
+            $('modal-category').textContent = entry.category || 'عام'; 
+            $('modal-username').textContent = entry.username;
+            
+            // Store raw password in hidden element
+            $('modal-password-text-hidden').textContent = entry.password;
+            
+            // Default to hidden
+            modalPwdShown = false;
+            $('modal-password-text').textContent = '••••••••';
+            $('modal-toggle-pwd').querySelector('i').className = 'ph-bold ph-eye';
+            
+            const colorId = entry.color || 'default'; 
+            const colorObj = CARD_COLORS.find(c => c.id === colorId) || CARD_COLORS[0];
+            $('view-modal').querySelector('.glass-card').style.background = colorObj.bg; 
+            $('view-modal').classList.remove('hidden');
         };
+
+        $('modal-toggle-pwd').addEventListener('click', () => {
+            const rawPwd = $('modal-password-text-hidden').textContent;
+            modalPwdShown = !modalPwdShown;
+            const txt = $('modal-password-text');
+            const icon = $('modal-toggle-pwd').querySelector('i');
+            if (modalPwdShown) {
+                txt.textContent = rawPwd;
+                icon.className = 'ph-bold ph-eye-slash';
+            } else {
+                txt.textContent = '••••••••';
+                icon.className = 'ph-bold ph-eye';
+            }
+        });
 
         window.copyPassword = function(index) { performCopy(entries[index].password, 'تم نسخ كلمة المرور السريّة'); };
         window.copyUsername = function(index) { performCopy(entries[index].username, 'تم نسخ البريد/الرقم بنجاح'); };
@@ -1198,7 +2700,21 @@
             editingIndex = index; const entry = entries[index];
             $('edit-website-input').value = entry.website; $('edit-category-input').value = entry.category || 'عام';
             $('edit-username-input').value = entry.username; $('edit-password-input').value = entry.password;
-            currentEditColor = entry.color || 'default'; renderColorPicker('edit-color-picker', currentEditColor, (id) => currentEditColor = id);
+            $('edit-password-input').type = 'password';
+            
+            // Set Strength evaluation inside Edit Modal
+            const evalResult = evaluatePasswordStrength(entry.password);
+            const bar = $('edit-pwd-strength-bar');
+            const text = $('edit-pwd-strength-text');
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة كلمة المرور: ' + evalResult.text;
+            text.className = 'text-[11px] mt-1 h-4 ' + evalResult.color;
+
+            currentEditColor = entry.color || 'default'; 
+            renderColorPicker('edit-color-picker', currentEditColor, (id) => currentEditColor = id);
+            
+            $('edit-generator-section').classList.add('hidden');
             $('edit-modal').classList.remove('hidden');
         };
 
@@ -1213,7 +2729,7 @@
         $('add-entry').addEventListener('click', async () => {
             const website = $('website-input').value.trim(), category = $('category-input').value, username = $('username-input').value.trim(), password = $('password-input').value.trim();
             if (website && username && password) {
-                entries.push({ website, category, username, password, color: currentAddColor });
+                entries.push({ website, category, username, password, color: currentAddColor, favorite: false });
                 await saveEntries(); $('add-modal').classList.add('hidden'); showToast('تم التشفير والحفظ بنجاح', 'success');
             } else { showToast('يرجى ملء جميع الحقول', 'error'); }
         });
@@ -1224,7 +2740,8 @@
             if (editingIndex === null) return;
             const website = $('edit-website-input').value.trim(), category = $('edit-category-input').value, username = $('edit-username-input').value.trim(), password = $('edit-password-input').value.trim();
             if (website && username && password) {
-                entries[editingIndex] = { website, category, username, password, color: currentEditColor };
+                const fav = entries[editingIndex].favorite || false;
+                entries[editingIndex] = { website, category, username, password, color: currentEditColor, favorite: fav };
                 await saveEntries(); $('edit-modal').classList.add('hidden'); editingIndex = null; showToast('تم حفظ التعديلات', 'success');
             } else { showToast('يرجى ملء جميع الحقول', 'error'); }
         });
@@ -1235,12 +2752,404 @@
             else { pwdInput.type = 'password'; icon.className = 'ph-bold ph-eye'; }
         });
 
+        // Add Modal strength watcher
+        $('password-input').addEventListener('input', () => {
+            const pwd = $('password-input').value;
+            const evalResult = evaluatePasswordStrength(pwd);
+            const bar = $('add-pwd-strength-bar');
+            const text = $('add-pwd-strength-text');
+            
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة كلمة المرور: ' + evalResult.text;
+            text.className = 'text-[11px] mt-1 h-4 ' + evalResult.color;
+        });
+
+        // Add Modal secure generator drawer setup
         $('generate-password').addEventListener('click', () => {
-            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~";
-            let retVal = ""; const array = new Uint32Array(16); window.crypto.getRandomValues(array);
-            for (let i = 0; i < 16; i++) retVal += charset[array[i] % charset.length];
-            $('password-input').value = retVal; $('password-input').type = 'text';
-            setTimeout(() => { $('password-input').type = 'password'; }, 2000);
+            $('add-generator-section').classList.toggle('hidden');
+        });
+        
+        $('gen-length').addEventListener('input', () => {
+            $('gen-length-val').textContent = $('gen-length').value;
+        });
+        
+        $('btn-gen-apply').addEventListener('click', () => {
+            const len = parseInt($('gen-length').value);
+            const upper = $('gen-upper').checked;
+            const lower = $('gen-lower').checked;
+            const nums = $('gen-nums').checked;
+            const syms = $('gen-syms').checked;
+            
+            const newPwd = generateSecurePassword(len, upper, lower, nums, syms);
+            $('password-input').value = newPwd;
+            $('password-input').type = 'text'; 
+            
+            const evalResult = evaluatePasswordStrength(newPwd);
+            const bar = $('add-pwd-strength-bar');
+            const text = $('add-pwd-strength-text');
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة كلمة المرور: ' + evalResult.text;
+            text.className = 'text-[11px] mt-1 h-4 ' + evalResult.color;
+            
+            $('add-generator-section').classList.add('hidden');
+        });
+
+        // Edit Modal strength watcher & generator setup
+        $('edit-password-input').addEventListener('input', () => {
+            const pwd = $('edit-password-input').value;
+            const evalResult = evaluatePasswordStrength(pwd);
+            const bar = $('edit-pwd-strength-bar');
+            const text = $('edit-pwd-strength-text');
+            
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة كلمة المرور: ' + evalResult.text;
+            text.className = 'text-[11px] mt-1 h-4 ' + evalResult.color;
+        });
+
+        $('toggle-edit-pwd').addEventListener('click', () => {
+            const pwdInput = $('edit-password-input'), icon = $('toggle-edit-pwd').querySelector('i');
+            if (pwdInput.type === 'password') { pwdInput.type = 'text'; icon.className = 'ph-bold ph-eye-slash'; } 
+            else { pwdInput.type = 'password'; icon.className = 'ph-bold ph-eye'; }
+        });
+
+        $('edit-generate-password').addEventListener('click', () => {
+            $('edit-generator-section').classList.toggle('hidden');
+        });
+        
+        $('edit-gen-length').addEventListener('input', () => {
+            $('edit-gen-length-val').textContent = $('edit-gen-length').value;
+        });
+        
+        $('btn-edit-gen-apply').addEventListener('click', () => {
+            const len = parseInt($('edit-gen-length').value);
+            const upper = $('edit-gen-upper').checked;
+            const lower = $('edit-gen-lower').checked;
+            const nums = $('edit-gen-nums').checked;
+            const syms = $('edit-gen-syms').checked;
+            
+            const newPwd = generateSecurePassword(len, upper, lower, nums, syms);
+            $('edit-password-input').value = newPwd;
+            $('edit-password-input').type = 'text'; 
+            
+            const evalResult = evaluatePasswordStrength(newPwd);
+            const bar = $('edit-pwd-strength-bar');
+            const text = $('edit-pwd-strength-text');
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة كلمة المرور: ' + evalResult.text;
+            text.className = 'text-[11px] mt-1 h-4 ' + evalResult.color;
+            
+            $('edit-generator-section').classList.add('hidden');
+        });
+
+        function generateSecurePassword(length, upper, lower, nums, syms) {
+            let charset = "";
+            if (upper) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            if (lower) charset += "abcdefghijklmnopqrstuvwxyz";
+            if (nums) charset += "0123456789";
+            if (syms) charset += "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+            
+            if (!charset) charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; 
+            
+            let retVal = "";
+            const array = new Uint32Array(length);
+            window.crypto.getRandomValues(array);
+            for (let i = 0; i < length; i++) {
+                retVal += charset[array[i] % charset.length];
+            }
+            return retVal;
+        }
+
+        // Master Password strength watcher & eye toggle
+        $('master-password-input').addEventListener('input', () => {
+            const pwd = $('master-password-input').value;
+            const evalResult = evaluatePasswordStrength(pwd);
+            const bar = $('master-pwd-strength-bar');
+            const text = $('master-pwd-strength-text');
+            
+            bar.className = 'h-full transition-all duration-300 ' + evalResult.bg;
+            bar.style.width = evalResult.score === 1 ? '25%' : evalResult.score === 2 ? '50%' : evalResult.score === 3 ? '75%' : evalResult.score === 4 ? '100%' : '0%';
+            text.textContent = 'قوة المفتاح الرئيسي: ' + evalResult.text;
+            text.className = 'text-[11px] mt-1 h-4 ' + evalResult.color;
+        });
+
+        $('toggle-master-pwd').addEventListener('click', () => {
+            const pwdInput = $('master-password-input'), icon = $('toggle-master-pwd').querySelector('i');
+            if (pwdInput.type === 'password') { pwdInput.type = 'text'; icon.className = 'ph-bold ph-eye-slash'; } 
+            else { pwdInput.type = 'password'; icon.className = 'ph-bold ph-eye'; }
+        });
+
+        // Audit card filters binding
+        $('audit-total-card').addEventListener('click', () => {
+            currentAuditFilter = 'all';
+            updateAuditActiveCard();
+            applyFilters();
+        });
+        $('audit-health-card').addEventListener('click', () => {
+            currentAuditFilter = 'all';
+            updateAuditActiveCard();
+            applyFilters();
+        });
+        $('audit-weak-card').addEventListener('click', () => {
+            currentAuditFilter = currentAuditFilter === 'weak' ? 'all' : 'weak';
+            updateAuditActiveCard();
+            applyFilters();
+        });
+        $('audit-reused-card').addEventListener('click', () => {
+            currentAuditFilter = currentAuditFilter === 'reused' ? 'all' : 'reused';
+            updateAuditActiveCard();
+            applyFilters();
+        });
+        
+        // --- Recovery display modal buttons ---
+        $('btn-copy-recovery-key').addEventListener('click', () => {
+            if (window.currentRecoveryKey) {
+                performCopy(window.currentRecoveryKey, 'تم نسخ مفتاح الاستعادة للحافظة');
+            }
+        });
+
+        $('btn-download-recovery-key').addEventListener('click', () => {
+            if (window.currentRecoveryKey) {
+                const blob = new Blob([window.currentRecoveryKey], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'smart-vault-recovery-key.txt';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showToast('تم تحميل مفتاح الاستعادة كملف نصي', 'success');
+            }
+        });
+
+        $('btn-email-recovery-key').addEventListener('click', () => {
+            if (window.currentRecoveryKey) {
+                const emailBody = `مرحباً،\n\nإليك مفتاح الاستعادة الطارئ الخاص بك للخزنة السحابية الذكية:\n\n${window.currentRecoveryKey}\n\nيرجى الاحتفاظ بهذا المفتاح في مكان آمن للغاية. في حال نسيان كلمة المرور الرئيسية، سيكون هذا المفتاح هو وسيلتك الوحيدة لاسترجاع حساباتك وبياناتك المشفرة.`;
+                const emailSubject = encodeURIComponent("مفتاح استعادة الخزنة السحابية الذكية");
+                const emailUrl = `mailto:?subject=${emailSubject}&body=${encodeURIComponent(emailBody)}`;
+                window.open(emailUrl, '_blank');
+            }
+        });
+
+        // --- Forgot password recovery screen ---
+        $('forgot-master-key-btn').addEventListener('click', () => {
+            $('recovery-key-input').value = '';
+            $('recovery-error').textContent = '';
+            $('recovery-modal').classList.remove('hidden');
+        });
+
+        $('btn-recovery-cancel').addEventListener('click', () => {
+            $('recovery-modal').classList.add('hidden');
+        });
+
+        $('btn-recovery-submit').addEventListener('click', async () => {
+            const keyInput = $('recovery-key-input').value.trim().toUpperCase();
+            $('recovery-error').textContent = '';
+            
+            if (!keyInput) {
+                $('recovery-error').textContent = 'يرجى إدخال مفتاح الاستعادة.';
+                return;
+            }
+            
+            const btn = $('btn-recovery-submit');
+            const origText = btn.textContent;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> جاري الاستعادة...';
+            btn.disabled = true;
+            
+            try {
+                const docSnap = await getDoc(vaultDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.encryptedRecoveryVaultKey && data.recoverySalt) {
+                        const recoveryKeyMaterial = await deriveKey(keyInput, data.recoverySalt, ITERATIONS);
+                        const decryptedVaultKeyRaw = await decryptDataRaw(data.encryptedRecoveryVaultKey, recoveryKeyMaterial);
+                        
+                        if (decryptedVaultKeyRaw) {
+                            masterKey = await window.crypto.subtle.importKey('raw', decryptedVaultKeyRaw, { name: ALGORITHM, length: KEY_LENGTH }, true, ['encrypt', 'decrypt']);
+                            userSalt = data.salt;
+                            window.isRecoveredSession = true;
+                            
+                            listenForEntries();
+                            resetInactivityTimer();
+                            
+                            $('master-password-section').classList.add('hidden');
+                            $('recovery-modal').classList.add('hidden');
+                            $('app-section').classList.remove('hidden');
+                            
+                            showToast('تمت استعادة الخزنة بنجاح! برجاء تحديث كلمة المرور في إعدادات الأمان فوراً.', 'success');
+                            window.openSettingsModal();
+                        } else {
+                            $('recovery-error').textContent = 'مفتاح الاستعادة غير صحيح أو تالف.';
+                        }
+                    } else {
+                        $('recovery-error').textContent = 'لا يوجد مفتاح استعادة مسجل لهذا الحساب. يرجى تسجيل الدخول بالطريقة المعتادة أولاً لتوليد مفتاح.';
+                    }
+                } else {
+                    $('recovery-error').textContent = 'لم يتم العثور على أي بيانات مشفرة لهذا الحساب.';
+                }
+            } catch (e) {
+                $('recovery-error').textContent = 'حدث خطأ أثناء عملية الاستعادة. يرجى التحقق من الاتصال بالشبكة.';
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        });
+
+        // --- PDF Export Logic ---
+        window.openPdfExportModal = function() {
+            $('pdf-password-input').value = '';
+            $('pdf-include-passwords').checked = true;
+            $('pdf-export-modal').classList.remove('hidden');
+        };
+
+        $('btn-pdf-export-cancel').addEventListener('click', () => {
+            $('pdf-export-modal').classList.add('hidden');
+        });
+
+        $('toggle-pdf-pwd').addEventListener('click', () => {
+            const pwdInput = $('pdf-password-input'), icon = $('toggle-pdf-pwd').querySelector('i');
+            if (pwdInput.type === 'password') { pwdInput.type = 'text'; icon.className = 'ph-bold ph-eye-slash'; } 
+            else { pwdInput.type = 'password'; icon.className = 'ph-bold ph-eye'; }
+        });
+
+        $('btn-pdf-export-submit').addEventListener('click', async () => {
+            const pdfPassword = $('pdf-password-input').value;
+            const includePwds = $('pdf-include-passwords').checked;
+            
+            const btn = $('btn-pdf-export-submit');
+            const origText = btn.textContent;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> جاري التصدير والتشفير...';
+            btn.disabled = true;
+            
+            try {
+                const reportDiv = document.createElement('div');
+                reportDiv.style.position = 'fixed';
+                reportDiv.style.left = '-9999px';
+                reportDiv.style.top = '0';
+                reportDiv.style.width = '800px';
+                reportDiv.style.backgroundColor = '#ffffff';
+                reportDiv.style.color = '#000000';
+                reportDiv.style.fontFamily = "'Cairo', sans-serif";
+                reportDiv.style.direction = 'rtl';
+                reportDiv.style.padding = '40px';
+                
+                let rowsHtml = '';
+                entries.forEach((entry, idx) => {
+                    const pwdVal = includePwds ? entry.password : '••••••••';
+                    rowsHtml += `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0;">${idx + 1}</td>
+                            <td style="padding: 12px; text-align: right; font-weight: bold; border-bottom: 1px solid #e2e8f0;">${escapeHTML(entry.website)}</td>
+                            <td style="padding: 12px; text-align: right; color: #475569; border-bottom: 1px solid #e2e8f0;">${escapeHTML(entry.category || 'عام')}</td>
+                            <td style="padding: 12px; text-align: left; font-family: monospace; border-bottom: 1px solid #e2e8f0;" dir="ltr">${escapeHTML(entry.username)}</td>
+                            <td style="padding: 12px; text-align: left; font-family: monospace; color: #16a34a; border-bottom: 1px solid #e2e8f0;" dir="ltr">${escapeHTML(pwdVal)}</td>
+                        </tr>
+                    `;
+                });
+                
+                reportDiv.innerHTML = `
+                    <div style="border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="text-align: right;">
+                            <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0; font-family: 'Cairo', sans-serif;">الخزنة السحابية الذكية</h1>
+                            <p style="font-size: 14px; color: #64748b; margin: 5px 0 0 0; font-family: 'Cairo', sans-serif;">تقرير الحسابات المؤمنة بكلمات المرور</p>
+                        </div>
+                        <div style="text-align: left;">
+                            <p style="font-size: 12px; color: #64748b; margin: 0; font-family: 'Cairo', sans-serif;">البريد الإلكتروني: <b>${escapeHTML(auth.currentUser?.email)}</b></p>
+                            <p style="font-size: 12px; color: #64748b; margin: 5px 0 0 0; font-family: 'Cairo', sans-serif;">تاريخ التصدير: ${new Date().toLocaleString('ar-EG')}</p>
+                        </div>
+                    </div>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; font-family: 'Cairo', sans-serif;">
+                        <thead>
+                            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                <th style="padding: 12px; width: 5%; text-align: center; font-weight: bold;">#</th>
+                                <th style="padding: 12px; width: 25%; text-align: right; font-weight: bold;">الموقع / التطبيق</th>
+                                <th style="padding: 12px; width: 15%; text-align: right; font-weight: bold;">التصنيف</th>
+                                <th style="padding: 12px; width: 30%; text-align: left; font-weight: bold;">اسم المستخدم / البريد</th>
+                                <th style="padding: 12px; width: 25%; text-align: left; font-weight: bold;">كلمة المرور</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+                        تم توليد هذا الملف وتشفيره بأمان من الخزنة الذكية. تمت البرمجة بواسطة خالد محي الدين.
+                    </div>
+                `;
+                
+                document.body.appendChild(reportDiv);
+                
+                // Wait briefly for CSS and fonts to apply in the DOM tree
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const canvas = await html2canvas(reportDiv, { scale: 2, useCORS: true, logging: false });
+                const pageHeightPx = Math.floor(canvas.width * (297 / 210)); 
+                let imgHeightLeft = canvas.height;
+                let srcY = 0;
+                
+                const pdfOptions = {
+                    orientation: 'p',
+                    unit: 'px',
+                    format: [canvas.width, pageHeightPx]
+                };
+                
+                if (pdfPassword) {
+                    pdfOptions.encryption = {
+                        userPassword: pdfPassword,
+                        ownerPassword: pdfPassword,
+                        userPermissions: ['print']
+                    };
+                }
+                
+                const pdf = new jspdf.jsPDF(pdfOptions);
+                let isFirstPage = true;
+                
+                while (imgHeightLeft > 0) {
+                    const chunkHeight = Math.min(imgHeightLeft, pageHeightPx);
+                    
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = pageHeightPx;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, canvas.width, pageHeightPx);
+                    
+                    tempCtx.drawImage(
+                        canvas, 
+                        0, srcY, canvas.width, chunkHeight, 
+                        0, 0, canvas.width, chunkHeight
+                    );
+                    
+                    const chunkImgData = tempCanvas.toDataURL('image/jpeg', 0.9);
+                    
+                    if (!isFirstPage) {
+                        pdf.addPage([canvas.width, pageHeightPx]);
+                    }
+                    pdf.addImage(chunkImgData, 'JPEG', 0, 0, canvas.width, pageHeightPx);
+                    
+                    isFirstPage = false;
+                    imgHeightLeft -= chunkHeight;
+                    srcY += chunkHeight;
+                }
+                
+                pdf.save('smart-vault-passwords.pdf');
+                document.body.removeChild(reportDiv);
+                $('pdf-export-modal').classList.add('hidden');
+                showToast('تم تصدير وتنزيل ملف PDF بنجاح!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء تصدير ملف PDF', 'error');
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
         });
         
         // --- Initialize ---
